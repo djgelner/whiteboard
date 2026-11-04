@@ -106,5 +106,50 @@
       "createdAt": "2026-01-15T00:00:00Z"
     }
   ],
-  "requests": []
+  "requests": [],
+  "links": [
+    {
+      "id": "example-record",
+      "group": "Record",
+      "label": "Operations record (example)",
+      "url": "https://example.com/example-org/ops/blob/main/CONTINUITY.md",
+      "note": "Decisions and merges, one dated entry per check-in.",
+      "order": 1,
+      "askedFor": 4
+    },
+    {
+      "id": "example-site",
+      "group": "Sites",
+      "label": "Docs site (example, live)",
+      "url": "https://example.com/docs",
+      "note": "The public documentation the Docs Site Architect maintains.",
+      "order": 2
+    }
+  ],
+  "ideas": [
+    {
+      "id": "weekly-digest-workflow",
+      "kind": "workflow",
+      "lane": "Newsletter",
+      "title": "Turn the Monday link roundup into a saved workflow",
+      "body": "The same four steps run by hand every Monday: collect links, cut to five, write two lines each, draft the issue.",
+      "recommendation": "Save it as a workflow the Newsletter Architect runs on its Monday tick.",
+      "status": "open",
+      "note": "",
+      "order": 1,
+      "createdAt": "2026-01-14T00:00:00Z"
+    },
+    {
+      "id": "docs-template-pack",
+      "kind": "revenue",
+      "lane": "Docs Site",
+      "title": "Sell the docs template pack as a one-time download",
+      "body": "Readers keep asking for the page templates behind the docs site. A pack of five would be quick to assemble from existing pages.",
+      "recommendation": "Assemble the pack and price it at a flat one-time fee; revisit after the first month.",
+      "status": "open",
+      "note": "",
+      "order": 2,
+      "createdAt": "2026-01-14T00:00:00Z"
+    }
+  ]
 }

@@ -1,6 +1,6 @@
 # Data model
 
-The desk reads four things from the artifact's database. The chief of staff (or the ArtifactData tool acting for it) writes almost all of it. The page writes only the fields marked below. Access rule: `{ path: "", read: "view", write: "admin" }`, so everyone signed in reads, and only admins and the owner write.
+The desk reads these collections from the artifact's database: `architects`, `issues`, `requests`, `links`, `ideas`, `decisions` and the single document `meta/board`. The chief of staff (or the ArtifactData tool acting for it) writes almost all of it. The page writes only the fields marked below. Access rule: `{ path: "", read: "view", write: "admin" }`, so everyone signed in reads, and only admins and the owner write.
 
 Timestamps are ISO 8601 strings in UTC. Document ids use letters, digits and `- _ . ~ : @ +` only.
 
@@ -55,11 +55,22 @@ What waits on the owner.
 | title | string | The short ask. |
 | body | string | The facts the owner needs. |
 | recommendation | string | The chief of staff's recommendation. |
-| status | string | `open` or `done`. |
+| status | string | `open`, `accepted`, `custom`, `declined` or `done`. See below. |
 | createdAt | string | When it was raised. |
-| doneAt | string or null | When it was closed. |
+| decidedAt | string or null | When the owner decided. |
+| decidedBy | string or null | `owner` when the page wrote the decision. |
+| note | string or null | The owner's own words, when the status is `custom`. |
+| doneAt | string or null | When the chief of staff closed it as done. |
 
-Written by the page: `status` and `doneAt`, when the owner presses "Mark done" or "Undo".
+Status values:
+
+- `open`: waiting on the owner. Shown with the buttons "Accept recommendation", "Something else" and "Decline".
+- `accepted`: the owner accepted the recommendation. The chief of staff acts on it and sets `done`.
+- `custom`: the owner wants something else and wrote it in `note`. The chief of staff reads the note, acts or asks, and sets `done`.
+- `declined`: the owner said no. The chief of staff closes it at the next check-in.
+- `done`: handled. Shown under "Decided".
+
+Written by the page: `status`, `decidedAt`, `decidedBy` and `note` when the owner decides, and all four cleared back to `open` on "Undo". The chief of staff writes `done` and `doneAt`.
 
 ## requests/{id}
 
@@ -84,6 +95,61 @@ Status values:
 - `declined`: set by the chief of staff when it decides not to apply a request. Put the reason in `result`.
 
 Written by the page: creates the document. The chief of staff updates `status`, `result` and `appliedAt` after handling a pending one.
+
+## links/{id}
+
+The owner's frequently used links, shown on the Links tab and as a strip of the first six on Home. The chief of staff adds what the owner asks for repeatedly. The owner can also add one on the Links tab.
+
+| Field | Type | Meaning |
+|---|---|---|
+| id | string | Same as the document id. The page makes it from the label plus a short random suffix. |
+| group | string | Free text heading, for example `Record`, `Sites`, `Sales`, `Money`, `Lanes`, `Tools`. |
+| label | string | The link text. |
+| url | string | An https address. Anything else is not rendered as a link. |
+| note | string | One line under the label. |
+| order | number | Sort order across the whole tab; groups appear in the order of their first link. |
+| askedFor | number | Optional. How often the owner asked for it. |
+
+Written by the page: creates documents from the "Add link" form (owner and admins). The chief of staff edits and removes them.
+
+## ideas/{id}
+
+Proposals the chief of staff wants a decision on, shown on the Ideas tab in three groups.
+
+| Field | Type | Meaning |
+|---|---|---|
+| id | string | Same as the document id. |
+| kind | string | `workflow` (a repeated task worth saving), `system` or `revenue`. |
+| lane | string | Which lane it concerns, shown as a chip. |
+| title | string | The short proposal. |
+| body | string | The facts. |
+| recommendation | string | The chief of staff's recommendation. |
+| status | string | `open`, `accepted`, `custom`, `declined` or `done`, with the same meanings as for issues. |
+| note | string | The owner's words when `custom`. |
+| decidedAt, decidedBy | string | Written by the page when the owner decides. |
+| order | number | Sort order within its group. |
+| createdAt | string | When it was raised. |
+| result | string | Optional. What the chief of staff did, written when it marks the idea `done`. |
+
+Written by the page: the same decision fields as issues. The chief of staff creates ideas and writes `done` and `result`.
+
+## decisions/{id}
+
+An audit record of every decision the owner makes on the page. The id is `<collection>-<docId>-<epoch ms>`.
+
+| Field | Type | Meaning |
+|---|---|---|
+| id | string | Same as the document id. |
+| collection | string | `issues` or `ideas`. |
+| docId | string | The id of the issue or idea. |
+| title | string | Its title at the time. |
+| status | string | `accepted`, `custom` or `declined`. |
+| note | string | The owner's words for `custom`, otherwise empty. |
+| decidedAt | string | When the owner pressed the button. |
+| decidedBy | string | `owner`. |
+| notified | boolean | True when the page managed to message the chief of staff's session at once. |
+
+Written by the page only. The chief of staff reads it at check-ins. The page shows only a count on Home: decisions made since `meta/board.updatedAt`.
 
 ## meta/board
 
@@ -113,6 +179,9 @@ The `fable` object:
 | Data | Chief of staff | Page (owner or admin) |
 |---|---|---|
 | architects | creates, updates everything | `status`, `cron`, `cadence`, `updatedAt` |
-| issues | creates, updates, may delete old ones | `status`, `doneAt` |
+| issues | creates, updates, sets `done`, may delete old ones | `status`, `decidedAt`, `decidedBy`, `note` |
 | requests | handles pending ones, sets `declined` | creates new ones |
+| links | creates, edits, removes | creates new ones |
+| ideas | creates, sets `done` and `result` | `status`, `decidedAt`, `decidedBy`, `note` |
+| decisions | reads at check-ins | creates one per decision |
 | meta/board | writes it every check-in | reads only |

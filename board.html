@@ -240,11 +240,31 @@ td .row { gap: 4px 8px; }
 .panel.ok { border-color: var(--accent); background: var(--accent-soft); }
 .field { display: grid; gap: 4px; min-width: 0; }
 .field label { font-size: 13px; font-weight: 500; }
-select, input[type="text"] {
+select, input[type="text"], textarea {
   font: inherit; color: var(--fg); background: var(--bg);
   border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; min-height: 40px; width: 100%; min-width: 0;
 }
 input.mono { font-family: var(--mono); }
+textarea { resize: vertical; min-height: 110px; line-height: 1.45; }
+[hidden] { display: none !important; }
+.btn.outline { border-color: var(--accent); color: var(--accent); background: transparent; }
+.btn.outline:hover:not(:disabled) { background: var(--accent-soft); }
+.btn.text { border-color: transparent; background: transparent; color: var(--fg-muted); text-decoration: underline; text-underline-offset: 2px; }
+.btn.text:hover:not(:disabled) { background: var(--surface-2); color: var(--fg); }
+.linkbtn { font: inherit; font-size: 13px; background: none; border: 0; padding: 4px 2px; min-height: 32px; color: var(--accent); text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+.linkbtn:disabled { opacity: 0.55; cursor: not-allowed; }
+.pill.accepted, .pill.done { background: var(--ok-soft); color: var(--ok); }
+.pill.custom { background: var(--info-soft); color: var(--info); }
+.pill.declined { background: var(--surface-2); color: var(--fg-muted); }
+.issue.k-idea { border-left-color: var(--busy); }
+.issue .note-box { background: var(--info-soft); color: var(--fg); border-radius: 8px; padding: 8px 10px; font-size: 14px; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.lchip { display: inline-block; max-width: 100%; font-size: 14px; font-weight: 500; text-decoration: none; color: var(--fg); background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 6px 14px; overflow-wrap: anywhere; }
+.lchip:hover { border-color: var(--accent); color: var(--accent); }
+.link-item { display: grid; gap: 4px; padding: 14px; }
+.link-item .lbl { font-weight: 600; font-size: 16px; overflow-wrap: anywhere; }
+.dlg-back { position: fixed; inset: 0; z-index: 60; background: rgba(10, 12, 16, 0.55); display: grid; place-items: center; padding: 16px; }
+.dlg { width: min(520px, 100%); max-height: 100%; overflow: auto; background: var(--surface); color: var(--fg); border: 1px solid var(--line); border-radius: 14px; padding: 20px; box-shadow: var(--shadow); display: grid; gap: 12px; }
 .form-grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); align-items: end; }
 .err-text { color: var(--danger); font-size: 13px; }
 details > summary { cursor: pointer; font-weight: 500; padding: 6px 0; }
@@ -276,6 +296,21 @@ details > summary { cursor: pointer; font-weight: 500; padding: 6px 0; }
   <main id="view" tabindex="-1"></main>
 </div>
 <div id="toasts" role="status" aria-live="polite"></div>
+<div class="dlg-back" id="dlg" hidden>
+  <div class="dlg" role="dialog" aria-modal="true" aria-labelledby="dlg-title">
+    <h3 id="dlg-title">Something else</h3>
+    <p class="small muted" id="dlg-sub"></p>
+    <div class="field">
+      <label for="dlg-text">What should happen instead, in your words</label>
+      <textarea id="dlg-text" rows="5" maxlength="2000"></textarea>
+    </div>
+    <div class="err-text" id="dlg-err" role="alert" hidden></div>
+    <div class="row">
+      <button class="btn primary" id="dlg-send" data-action="dlg-send">Send</button>
+      <button class="btn" id="dlg-cancel" data-action="dlg-cancel">Cancel</button>
+    </div>
+  </div>
+</div>
 
 <script>
 (function () {
@@ -289,7 +324,9 @@ details > summary { cursor: pointer; font-weight: 500; padding: 6px 0; }
     chiefPoss: "the Chief of Staff's",
     ChiefPoss: "The Chief of Staff's",
     owner: "the owner",
-    empty: "Seed the board from seed.example.json (see README)."
+    empty: "Seed the board from seed.example.json (see README).",
+    reads: "Reads this board at each check-in, and at once when the connector notifies it.",
+    linksEmpty: "No links yet. The Chief of Staff fills this with what the owner asks for repeatedly."
   };
   var SERVER = "Claude Code Remote";
   var LS_KEY = "desk-last-tab";
@@ -301,6 +338,10 @@ details > summary { cursor: pointer; font-weight: 500; padding: 6px 0; }
     { id: "p1d", label: "Daily at 14:07 UTC", cron: "7 14 * * *", cadence: "Once a day at 14:07 UTC" },
     { id: "custom", label: "Custom cron", cron: "", cadence: "" }
   ];
+  var DECIDED = { accepted: 1, custom: 1, declined: 1, done: 1 };
+  var STATUS_LABEL = { accepted: "Accepted", custom: "Something else", declined: "Declined", done: "Done" };
+  var IDEA_KINDS = [["workflow", "Workflows for repeated tasks"], ["system", "Systems"], ["revenue", "Revenue"]];
+  var ROUTES = { home: 1, links: 1, ideas: 1, inactive: 1 };
   var KINDS = [["decision", "Decisions"], ["go-ahead", "Go-aheads"], ["blocker", "Blockers"]];
   // Codes meaning "this view cannot use the connector": show the record, hide live parts.
   var DENIED = {
@@ -311,12 +352,13 @@ details > summary { cursor: pointer; font-weight: 500; padding: 6px 0; }
 
   var S = {
     db: null, user: null, mcp: null, readonly: false, role: "",
-    arch: [], issues: [], reqs: [], meta: null,
-    got: { arch: false, issues: false, reqs: false, meta: false },
+    arch: [], issues: [], reqs: [], meta: null, links: [], ideas: [], decisions: [],
+    got: { arch: false, issues: false, reqs: false, meta: false, links: false, ideas: false, decisions: false },
+    open: {}, dlg: null, linkDraft: { label: "", url: "", group: "", note: "", error: "" },
     fresh: {}, slow: {}, dberr: null, booted: false,
     live: {}, watches: {}, watchSig: "", watchInputs: {},
     route: "home", draft: {}, confirm: null, busy: {}, now: Date.now(),
-    focus: null, doneOpen: false, notice: {}
+    focus: null, notice: {}
   };
 
   /* ---------- helpers ---------- */
@@ -383,6 +425,17 @@ details > summary { cursor: pointer; font-weight: 500; padding: 6px 0; }
     return "";
   }
   function hasMcp() { return !!S.mcp; }
+  function isDecided(i) { return !!DECIDED[i.status]; }
+  function decTime(i) { return String(i.decidedAt || i.doneAt || ""); }
+  function slug(t) { return String(t || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 40) || "link"; }
+  function rnd() { return Math.random().toString(36).slice(2, 6); }
+  function validRoute(r) { return !!(ROUTES[r] || /^a-.+/.test(r)); }
+  function nfx(ok) { return ok ? T.Chief + " notified." : "Recorded; " + T.chief + " reads it at the next check-in."; }
+  function decisionsSince() {
+    var cut = S.meta && S.meta.updatedAt ? Date.parse(S.meta.updatedAt) : 0;
+    if (isNaN(cut)) cut = 0;
+    return S.decisions.filter(function (d) { var t = Date.parse(d.decidedAt); return !isNaN(t) && t > cut; }).length;
+  }
   function dbMsg(e) {
     var c = e && e.code;
     if (c === "invalid_argument") return "The board refused that change. Only the owner and admins can edit it.";
@@ -433,8 +486,10 @@ details > summary { cursor: pointer; font-weight: 500; padding: 6px 0; }
   }
 
   function navHtml() {
-    var items = [["home", "Home"]];
+    var items = [["home", "Home"], ["links", "Links"]];
     activeA().forEach(function (a) { items.push(["a-" + a.id, shortName(a.name)]); });
+    var no = S.ideas.filter(function (i) { return !isDecided(i); }).length;
+    items.push(["ideas", "Ideas" + (no ? " (" + no + ")" : "")]);
     var n = inactiveA().length;
     items.push(["inactive", "Inactive" + (n ? " (" + n + ")" : "")]);
     var cur = S.route;
@@ -451,8 +506,8 @@ details > summary { cursor: pointer; font-weight: 500; padding: 6px 0; }
   function banners() {
     var h = "";
     if (S.dberr) h += '<div class="banner err">The board stopped updating (' + esc(S.dberr.code || "error") + "). What you see may be out of date. Reload the page to reconnect.</div>";
-    else if (S.slow.arch || S.slow.issues || S.slow.reqs || S.slow.meta) h += '<div class="banner warn">The board is slow to answer. What you see may be out of date.</div>';
-    if (S.readonly) h += '<div class="banner">View only. The owner and admins change cadences, pause lanes and mark items done.</div>';
+    else if (S.slow.arch || S.slow.issues || S.slow.reqs || S.slow.meta || S.slow.links || S.slow.ideas || S.slow.decisions) h += '<div class="banner warn">The board is slow to answer. What you see may be out of date.</div>';
+    if (S.readonly) h += '<div class="banner">View only. The owner and admins change cadences, pause lanes and decide items.</div>';
     return h;
   }
 
@@ -470,6 +525,8 @@ details > summary { cursor: pointer; font-weight: 500; padding: 6px 0; }
     var m = /^a-(.+)$/.exec(S.route);
     if (m) body = archView(m[1]);
     else if (S.route === "inactive") body = inactiveView();
+    else if (S.route === "links") body = linksView();
+    else if (S.route === "ideas") body = ideasView();
     else body = homeView();
     return banners() + body;
   }
@@ -541,7 +598,7 @@ details > summary { cursor: pointer; font-weight: 500; padding: 6px 0; }
 
   /* ----- HOME ----- */
   function homeView() {
-    return fableCard() + waitingSection() + architectsTable() + pendingSection();
+    return fableCard() + linksStrip() + waitingSection() + architectsTable() + pendingSection();
   }
   function fableCard() {
     var f = S.meta && S.meta.fable;
@@ -551,6 +608,7 @@ details > summary { cursor: pointer; font-weight: 500; padding: 6px 0; }
       '<div class="row" style="justify-content:space-between"><h2 id="fable-h">' + esc(f.name || T.chief) + "</h2>" +
       (S.meta.updatedAt ? '<span class="small muted">Board updated ' + tm(S.meta.updatedAt) + "</span>" : "") + "</div>" +
       '<p class="muted">' + esc(f.role || "") + "</p>" +
+      '<p class="small muted">' + esc(T.reads) + (decisionsSince() ? " <strong>" + decisionsSince() + " decision" + (decisionsSince() === 1 ? "" : "s") + " since the last check-in.</strong>" : "") + "</p>" +
       '<dl class="facts">' +
       '<div class="fact"><dt>Check-ins</dt><dd>' + esc(f.checkins || "Not set") + "</dd></div>" +
       '<div class="fact"><dt>Next check-in</dt><dd>' + (f.nextCheckin ? tm(f.nextCheckin) + ' <span class="small muted">' + esc(absT(f.nextCheckin)) + "</span>" : "Not armed") + "</dd></div>" +
@@ -559,19 +617,36 @@ details > summary { cursor: pointer; font-weight: 500; padding: 6px 0; }
       '<div class="row">' + (safeUrl(f.sessionUrl) ? link(f.sessionUrl, "Open the live session", "btn primary") : "") + (safeUrl(f.recordUrl) ? link(f.recordUrl, "Read the record", "btn") : "") + "</div>" +
       "</div></section>";
   }
-  function issueCard(i, done) {
-    var b = S.busy["i:" + i.id] ? " disabled" : "";
-    return '<article class="issue k-' + esc(i.kind) + '">' +
-      '<div class="issue-top"><span class="chip">' + esc(i.lane || "General") + "</span>" + (done && i.doneAt ? '<span class="small muted">done ' + tm(i.doneAt) + "</span>" : (i.createdAt ? '<span class="small muted">raised ' + tm(i.createdAt) + "</span>" : "")) + "</div>" +
-      "<h4>" + esc(i.title) + "</h4>" +
+  function decisionCard(coll, i, decided) {
+    var b = S.busy["d:" + coll + ":" + i.id] ? " disabled" : "";
+    var cls = coll === "ideas" ? "k-idea" : "k-" + esc(i.kind);
+    var top = '<div class="issue-top"><span class="chip">' + esc(i.lane || "General") + "</span>";
+    if (decided) top += '<span class="pill ' + esc(i.status) + '">' + esc(STATUS_LABEL[i.status] || i.status) + '</span><span class="small muted">' + tm(decTime(i)) + "</span>";
+    else if (i.createdAt) top += '<span class="small muted">raised ' + tm(i.createdAt) + "</span>";
+    top += "</div>";
+    var h = '<article class="issue ' + cls + '">' + top + "<h4>" + esc(i.title) + "</h4>" +
       (i.body ? "<p>" + esc(i.body) + "</p>" : "") +
       (i.recommendation ? '<p class="rec"><strong>' + esc(T.Chief) + " recommends:</strong> " + esc(i.recommendation) + "</p>" : "") +
-      (S.readonly ? "" : '<div class="row"><button class="btn sm" id="issue-' + (done ? "undo" : "done") + "-" + esc(i.id) + '" data-action="' + (done ? "issue-undo" : "issue-done") + '" data-id="' + esc(i.id) + '"' + b + ">" + (done ? "Undo" : "Mark done") + "</button></div>") +
-      "</article>";
+      (decided && i.note ? '<p class="note-box"><strong>Note:</strong> ' + esc(i.note) + "</p>" : "") +
+      (decided && i.status === "done" && i.result ? '<p class="small muted">' + esc(i.result) + "</p>" : "");
+    if (!S.readonly) {
+      var k = esc(coll) + "-" + esc(i.id), at = ' data-coll="' + esc(coll) + '" data-id="' + esc(i.id) + '"' + b;
+      if (decided) h += '<div class="row"><button class="linkbtn" id="undo-' + k + '" data-action="undo"' + at + ">Undo</button></div>";
+      else h += '<div class="row"><button class="btn primary" id="acc-' + k + '" data-action="accept"' + at + ">Accept recommendation</button>" +
+        '<button class="btn outline" id="cus-' + k + '" data-action="custom"' + at + ">Something else</button>" +
+        '<button class="btn text sm" id="dec-' + k + '" data-action="decline"' + at + ">Decline</button></div>";
+    }
+    return h + "</article>";
   }
+  function decidedBlock(id, coll, list) {
+    if (!list.length) return "";
+    return '<details id="' + id + '" style="margin-top:14px"' + (S.open[id] ? " open" : "") + "><summary>Decided (" + list.length + ')</summary><div class="grid" style="margin-top:8px">' +
+      list.map(function (i) { return decisionCard(coll, i, true); }).join("") + "</div></details>";
+  }
+  function byDecided(a, b) { return decTime(b).localeCompare(decTime(a)); }
   function waitingSection() {
-    var open = S.issues.filter(function (i) { return i.status !== "done"; }).sort(byOrder);
-    var done = S.issues.filter(function (i) { return i.status === "done"; }).sort(function (a, b) { return String(b.doneAt || "").localeCompare(String(a.doneAt || "")); });
+    var open = S.issues.filter(function (i) { return !isDecided(i); }).sort(byOrder);
+    var done = S.issues.filter(isDecided).sort(byDecided);
     var h = '<section aria-labelledby="wait-h"><div class="sec-head"><h2 id="wait-h">Waiting on ' + esc(T.owner) + '</h2><span class="small muted">' + open.length + " open</span></div>";
     if (!open.length) h += '<div class="card muted">Nothing is waiting on you.</div>';
     else {
@@ -581,16 +656,79 @@ details > summary { cursor: pointer; font-weight: 500; padding: 6px 0; }
         var list = open.filter(function (i) { return i.kind === k[0]; });
         list.forEach(function (i) { known[i.id] = 1; });
         if (!list.length) return;
-        h += '<div><div class="kind-head">' + esc(k[1]) + ' <span class="small muted">' + list.length + '</span></div><div class="grid">' + list.map(function (i) { return issueCard(i, false); }).join("") + "</div></div>";
+        h += '<div><div class="kind-head">' + esc(k[1]) + ' <span class="small muted">' + list.length + '</span></div><div class="grid">' + list.map(function (i) { return decisionCard("issues", i, false); }).join("") + "</div></div>";
       });
       var rest = open.filter(function (i) { return !known[i.id]; });
-      if (rest.length) h += '<div><div class="kind-head">Other</div><div class="grid">' + rest.map(function (i) { return issueCard(i, false); }).join("") + "</div></div>";
+      if (rest.length) h += '<div><div class="kind-head">Other</div><div class="grid">' + rest.map(function (i) { return decisionCard("issues", i, false); }).join("") + "</div></div>";
       h += "</div>";
     }
-    if (done.length) {
-      h += '<details id="done-details" style="margin-top:14px"' + (S.doneOpen ? " open" : "") + "><summary>Done (" + done.length + ')</summary><div class="grid" style="margin-top:8px">' + done.map(function (i) { return issueCard(i, true); }).join("") + "</div></details>";
+    return h + decidedBlock("done-details", "issues", done) + "</section>";
+  }
+  function linksStrip() {
+    var l = S.links.slice().sort(byOrder).slice(0, 6).filter(function (x) { return safeUrl(x.url); });
+    if (!l.length) return "";
+    return '<section aria-labelledby="ls-h"><div class="sec-head"><h3 id="ls-h">Links you use most</h3><a class="small" href="#links">See all</a></div><div class="chips">' +
+      l.map(function (x) { return link(x.url, x.label || x.url, "lchip"); }).join("") + "</div></section>";
+  }
+
+  /* ----- LINKS ----- */
+  function linksView() {
+    var h = '<section><div class="sec-head"><h2>Links</h2><span class="small muted">' + S.links.length + " saved</span></div>";
+    if (!S.got.links) return h + loadingState() + "</section>";
+    var list = S.links.slice().sort(byOrder);
+    if (!list.length) h += '<div class="card empty"><p>' + esc(T.linksEmpty) + "</p></div>";
+    else {
+      var groups = [], by = {};
+      list.forEach(function (x) {
+        var g = String(x.group || "General");
+        if (!by[g]) { by[g] = []; groups.push(g); }
+        by[g].push(x);
+      });
+      groups.forEach(function (g) {
+        h += '<div class="kind-head">' + esc(g) + ' <span class="small muted">' + by[g].length + '</span></div><div class="grid">' +
+          by[g].map(function (x) {
+            return '<article class="card link-item"><div class="lbl">' + (link(x.url, x.label || x.url) || esc(x.label || "Untitled")) + "</div>" +
+              (x.note ? '<p class="small muted">' + esc(x.note) + "</p>" : "") +
+              (Number(x.askedFor) > 0 ? '<p class="small muted">Asked for ' + esc(x.askedFor) + (Number(x.askedFor) === 1 ? " time" : " times") + "</p>" : "") + "</article>";
+          }).join("") + "</div>";
+      });
     }
-    return h + "</section>";
+    h += "</section>";
+    if (!S.readonly) {
+      var d = S.linkDraft, busy = S.busy.link ? " disabled" : "";
+      var gl = {};
+      ["Record", "Sites", "Sales", "Money", "Lanes", "Tools"].concat(list.map(function (x) { return x.group; })).forEach(function (g) { if (g) gl[g] = 1; });
+      h += '<section><div class="sec-head"><h3>Add a link</h3></div><div class="card stack"><div class="form-grid">' +
+        '<div class="field"><label for="lk-label">Label</label><input type="text" id="lk-label" data-draft="lk-label" value="' + esc(d.label) + '" autocomplete="off"' + busy + "></div>" +
+        '<div class="field"><label for="lk-url">Address (https)</label><input type="text" inputmode="url" id="lk-url" data-draft="lk-url" value="' + esc(d.url) + '" autocomplete="off" spellcheck="false"' + busy + "></div>" +
+        '<div class="field"><label for="lk-group">Group</label><input type="text" id="lk-group" list="lk-groups" data-draft="lk-group" value="' + esc(d.group) + '" autocomplete="off"' + busy + '><datalist id="lk-groups">' + Object.keys(gl).map(function (g) { return '<option value="' + esc(g) + '"></option>'; }).join("") + "</datalist></div>" +
+        '<div class="field"><label for="lk-note">Note</label><input type="text" id="lk-note" data-draft="lk-note" value="' + esc(d.note) + '" autocomplete="off"' + busy + "></div></div>" +
+        (d.error ? '<div class="err-text" role="alert">' + esc(d.error) + "</div>" : "") +
+        '<div class="row"><button class="btn primary" id="lk-add" data-action="link-add"' + busy + ">Add link</button></div></div></section>";
+    }
+    return h;
+  }
+
+  /* ----- IDEAS ----- */
+  function ideasView() {
+    var open = S.ideas.filter(function (i) { return !isDecided(i); }).sort(byOrder);
+    var done = S.ideas.filter(isDecided).sort(byDecided);
+    var h = '<section><div class="sec-head"><h2>Ideas</h2><span class="small muted">' + open.length + " open</span></div>";
+    if (!S.got.ideas) return h + loadingState() + "</section>";
+    if (!S.ideas.length) return h + '<div class="card empty"><h2>No ideas yet</h2><p>' + esc(T.Chief) + " adds workflows for repeated tasks, systems and revenue ideas here, each with a recommendation you can accept in one click.</p></div></section>";
+    if (!open.length) h += '<div class="card muted">No open ideas. Everything has a decision.</div>';
+    else {
+      var known = {};
+      IDEA_KINDS.forEach(function (k) {
+        var list = open.filter(function (i) { return i.kind === k[0]; });
+        list.forEach(function (i) { known[i.id] = 1; });
+        if (!list.length) return;
+        h += '<div class="kind-head">' + esc(k[1]) + ' <span class="small muted">' + list.length + '</span></div><div class="grid">' + list.map(function (i) { return decisionCard("ideas", i, false); }).join("") + "</div>";
+      });
+      var rest = open.filter(function (i) { return !known[i.id]; });
+      if (rest.length) h += '<div class="kind-head">Other</div><div class="grid">' + rest.map(function (i) { return decisionCard("ideas", i, false); }).join("") + "</div>";
+    }
+    return h + decidedBlock("ideas-decided", "ideas", done) + "</section>";
   }
   function architectsTable() {
     var act = activeA();
@@ -792,15 +930,95 @@ details > summary { cursor: pointer; font-weight: 500; padding: 6px 0; }
   }
 
   /* ---------- actions ---------- */
-  async function setIssue(id, done) {
-    var key = "i:" + id;
-    if (S.busy[key] || !S.db) return;
+  async function notify(kind, coll, id, status, title, note) {
+    var f = S.meta && S.meta.fable;
+    if (!hasMcp() || !f || !f.sessionId) return false;
+    var msg = ("DESK: " + kind + " " + coll + "/" + id + " " + status + " by the owner at " + iso() + ". Title: " + (title || "untitled") + ". Note: " + (note || "none") + ".").replace(/\s+/g, " ").slice(0, 3000);
+    try {
+      await Promise.race([
+        S.mcp.callTool(SERVER, "send_message", { session_id: f.sessionId, message: msg }),
+        new Promise(function (_, rej) { setTimeout(function () { rej(new Error("timeout")); }, 20000); })
+      ]);
+      return true;
+    } catch (e) { return false; }
+  }
+
+  async function decide(coll, id, status, noteText) {
+    var list = coll === "ideas" ? S.ideas : S.issues, item = null;
+    for (var n = 0; n < list.length; n++) if (list[n].id === id) item = list[n];
+    var key = "d:" + coll + ":" + id;
+    if (!item || S.busy[key] || !S.db || S.readonly) return;
+    S.busy[key] = true; render();
+    var at = iso(), upd = { status: status, decidedAt: at, decidedBy: "owner" };
+    if (status === "custom") upd.note = noteText;
+    var ok = false;
+    try { await S.db.doc(coll + "/" + id).update(upd); ok = true; } catch (e) { toast(dbMsg(e), "err"); }
+    if (ok) {
+      var dec = { id: coll + "-" + id + "-" + Date.now(), collection: coll, docId: id, title: item.title || "", status: status, note: status === "custom" ? noteText : "", decidedAt: at, decidedBy: "owner", notified: false };
+      var wrote = true, saveErr = null;
+      try { await S.db.collection("decisions").doc(dec.id).set(dec); } catch (e2) { wrote = false; saveErr = e2; }
+      var sent = await notify("decision", coll, id, status, dec.title, dec.note);
+      if (sent && wrote) { try { await S.db.doc("decisions/" + dec.id).update({ notified: true }); } catch (e3) { /* the notice went out; the flag is cosmetic */ } }
+      var base = status === "accepted" ? "Accepted. " + T.Chief + " acts on it and marks it done." : status === "custom" ? "Sent to " + T.chief + " to pass on." : "Declined.";
+      toast(base + " " + nfx(sent) + (wrote ? "" : " The audit record did not save: " + dbMsg(saveErr)), wrote ? "" : "err");
+    }
+    S.busy[key] = false; render();
+  }
+  async function undoDecision(coll, id) {
+    var key = "d:" + coll + ":" + id;
+    if (S.busy[key] || !S.db || S.readonly) return;
     S.busy[key] = true; render();
     try {
-      await S.db.doc("issues/" + id).update(done ? { status: "done", doneAt: iso() } : { status: "open", doneAt: null });
-      toast(done ? "Marked done." : "Back on the list.");
+      await S.db.doc(coll + "/" + id).update({ status: "open", decidedAt: null, decidedBy: null, note: null, doneAt: null });
+      toast("Back on the list.");
     } catch (e) { toast(dbMsg(e), "err"); }
     S.busy[key] = false; render();
+  }
+
+  /* dialog for "Something else" */
+  function openDlg(coll, id) {
+    var list = coll === "ideas" ? S.ideas : S.issues, item = null;
+    for (var n = 0; n < list.length; n++) if (list[n].id === id) item = list[n];
+    if (!item || S.readonly) return;
+    var ae = document.activeElement;
+    S.dlg = { coll: coll, id: id, ret: ae && ae.id ? ae.id : "" };
+    $("#dlg-sub").textContent = item.title || "";
+    $("#dlg-text").value = "";
+    $("#dlg-err").hidden = true;
+    $("#dlg").hidden = false;
+    $("#dlg-text").focus();
+  }
+  function closeDlg() {
+    var d = S.dlg;
+    $("#dlg").hidden = true;
+    S.dlg = null;
+    if (d && d.ret) { S.focus = d.ret; render(); }
+  }
+  function sendDlg() {
+    var d = S.dlg; if (!d) return;
+    var text = $("#dlg-text").value.trim();
+    if (!text) { var er = $("#dlg-err"); er.textContent = "Write what should happen instead, then press Send."; er.hidden = false; $("#dlg-text").focus(); return; }
+    closeDlg();
+    decide(d.coll, d.id, "custom", text);
+  }
+
+  async function addLink() {
+    var d = S.linkDraft;
+    if (S.busy.link || !S.db || S.readonly) return;
+    var label = d.label.trim(), url = d.url.trim();
+    if (!label) { d.error = "Give the link a label."; render(); return; }
+    if (!safeUrl(url)) { d.error = "The address must start with https://."; render(); return; }
+    var mx = 0;
+    S.links.forEach(function (x) { if (Number(x.order) > mx) mx = Number(x.order); });
+    var o = { id: slug(label) + "-" + rnd(), group: d.group.trim() || "General", label: label, url: url, note: d.note.trim(), order: mx + 1 };
+    S.busy.link = true; d.error = ""; render();
+    try {
+      await S.db.collection("links").doc(o.id).set(o);
+      S.linkDraft = { label: "", url: "", group: d.group, note: "", error: "" };
+      S.focus = "lk-label";
+      toast("Link added.");
+    } catch (e) { d.error = dbMsg(e); }
+    S.busy.link = false; render();
   }
 
   async function trigCall(a, extra) {
@@ -853,17 +1071,20 @@ details > summary { cursor: pointer; font-weight: 500; padding: 6px 0; }
       try { await S.db.doc("architects/" + id).update(Object.assign({}, upd, { updatedAt: iso() })); wroteDoc = true; } catch (e1) { saveErr = e1; }
       var rq1 = mkReq(type, a, value, note, "applied", result);
       try { await S.db.collection("requests").doc(rq1.id).set(rq1); wroteReq = true; } catch (e2) { saveErr = saveErr || e2; }
+      var nOk = wroteReq ? await notify("request", "requests", rq1.id, "applied", note, result) : false;
       if (tr) S.live["t:" + a.tickId] = { data: { trigger: tr }, at: Date.now(), err: null };
       if (hasMcp()) { S.mcp.invalidate(SERVER, "get_trigger", { trigger_id: a.tickId }).catch(function () { /* ignore */ }); }
       var verb = type === "cadence" ? "Cadence applied to " + a.name + ": " + upd.cadence + "." : type === "deactivate" ? a.name + " is paused." : a.name + " is running again.";
-      if (wroteDoc && wroteReq) toast(verb);
+      if (wroteDoc && wroteReq) toast(verb + " " + nfx(nOk));
       else toast(verb + " The tick changed, but the board record did not save: " + dbMsg(saveErr), "err");
     } else {
       var reason = out.unavailable ? out.message : "The tick call failed (" + (out.code || "error") + "): " + out.message + " The tick may or may not have changed; " + T.chief + " will check.";
-      try { var rq2 = mkReq(type, a, value, note, "pending", reason); await S.db.collection("requests").doc(rq2.id).set(rq2); wroteReq = true; } catch (e3) { saveErr = e3; }
+      var rq2 = mkReq(type, a, value, note, "pending", reason);
+      try { await S.db.collection("requests").doc(rq2.id).set(rq2); wroteReq = true; } catch (e3) { saveErr = e3; }
       if (wroteReq) {
+        var nOk2 = await notify("request", "requests", rq2.id, "pending", note, reason);
         S.notice[id] = "Queued for " + T.chiefPoss + " next check-in. " + (out.unavailable ? "" : "The live call failed: " + out.message);
-        toast("Queued for " + T.chiefPoss + " next check-in.");
+        toast("Queued for " + T.chiefPoss + " next check-in. " + nfx(nOk2));
       } else toast("Could not queue the request: " + dbMsg(saveErr), "err");
     }
     S.busy[key] = false;
@@ -876,17 +1097,41 @@ details > summary { cursor: pointer; font-weight: 500; padding: 6px 0; }
     var el = ev.target.closest ? ev.target.closest("[data-action]") : null;
     if (!el || el.disabled) return;
     var act = el.getAttribute("data-action"), id = el.getAttribute("data-id"), type = el.getAttribute("data-type");
-    if (act === "issue-done") setIssue(id, true);
-    else if (act === "issue-undo") setIssue(id, false);
+    var coll = el.getAttribute("data-coll");
+    if (act === "accept") decide(coll, id, "accepted");
+    else if (act === "decline") decide(coll, id, "declined");
+    else if (act === "custom") openDlg(coll, id);
+    else if (act === "undo") undoDecision(coll, id);
+    else if (act === "dlg-send") sendDlg();
+    else if (act === "dlg-cancel") closeDlg();
+    else if (act === "link-add") addLink();
     else if (act === "cadence") runAction("cadence", id);
     else if (act === "confirm-open") { S.confirm = { type: type, id: id }; S.focus = "confirm-no-" + id; render(); }
     else if (act === "confirm-no") { S.confirm = null; var c0 = findA(id); S.focus = c0 && c0.status === "inactive" ? "act-" + id : "deact-" + id; render(); }
     else if (act === "confirm-yes") runAction(type, id);
     else if (act === "retry-live") retryLive(el.getAttribute("data-key"));
   });
+  document.addEventListener("click", function (ev) {
+    if (ev.target && ev.target.id === "dlg") closeDlg();
+  });
+  document.addEventListener("keydown", function (ev) {
+    if (S.dlg) {
+      if (ev.key === "Escape") { ev.preventDefault(); closeDlg(); return; }
+      if (ev.key === "Tab") {
+        var seq = [$("#dlg-text"), $("#dlg-send"), $("#dlg-cancel")], i = seq.indexOf(document.activeElement);
+        if (ev.shiftKey && i <= 0) { ev.preventDefault(); seq[2].focus(); }
+        else if (!ev.shiftKey && i === 2) { ev.preventDefault(); seq[0].focus(); }
+        return;
+      }
+    }
+    var t = ev.target;
+    if (ev.key === "Enter" && t && t.getAttribute && /^lk-/.test(t.getAttribute("data-draft") || "")) { ev.preventDefault(); addLink(); }
+  });
   document.addEventListener("input", function (ev) {
     var el = ev.target;
-    if (!el || el.getAttribute("data-draft") !== "cron") return;
+    var dr = el && el.getAttribute ? el.getAttribute("data-draft") : "";
+    if (dr && dr.indexOf("lk-") === 0) { S.linkDraft[dr.slice(3)] = el.value; S.linkDraft.error = ""; return; }
+    if (!el || dr !== "cron") return;
     var a = findA(el.getAttribute("data-aid")); if (!a) return;
     var d = getDraft(a);
     d.cron = el.value; d.error = "";
@@ -908,20 +1153,21 @@ details > summary { cursor: pointer; font-weight: 500; padding: 6px 0; }
     if (el.value === "custom" && inp) inp.focus();
   });
   document.addEventListener("toggle", function (ev) {
-    if (ev.target && ev.target.id === "done-details") S.doneOpen = ev.target.open;
+    var t = ev.target;
+    if (t && t.tagName === "DETAILS" && t.id) S.open[t.id] = t.open;
   }, true);
 
   /* ---------- routing ---------- */
   function readRoute() {
     var h = (location.hash || "").replace(/^#/, "");
-    if (h === "home" || h === "inactive" || /^a-.+/.test(h)) return h;
+    if (validRoute(h)) return h;
     return "";
   }
   function applyRoute(first) {
     var r = readRoute();
     if (!r && first) {
       try { r = localStorage.getItem(LS_KEY) || ""; } catch (e) { r = ""; }
-      if (r && !(r === "home" || r === "inactive" || /^a-.+/.test(r))) r = "";
+      if (r && !validRoute(r)) r = "";
       if (r && r !== "home") { try { history.replaceState(null, "", "#" + r); } catch (e2) { /* ignore */ } }
     }
     S.route = r || "home";
@@ -976,6 +1222,9 @@ details > summary { cursor: pointer; font-weight: 500; padding: 6px 0; }
       sub("issues", S.db.collection("issues"), function (snap) { S.issues = docs(snap).sort(byOrder); });
       sub("reqs", S.db.collection("requests"), function (snap) { S.reqs = docs(snap); });
       sub("meta", S.db.doc("meta/board"), function (snap) { S.meta = snap.exists ? snap.data() : null; });
+      sub("links", S.db.collection("links"), function (snap) { S.links = docs(snap); });
+      sub("ideas", S.db.collection("ideas"), function (snap) { S.ideas = docs(snap); });
+      sub("decisions", S.db.collection("decisions"), function (snap) { S.decisions = docs(snap); });
     }
     render();
   }
