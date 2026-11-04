@@ -258,6 +258,9 @@ textarea { resize: vertical; min-height: 110px; line-height: 1.45; }
 .pill.declined { background: var(--surface-2); color: var(--fg-muted); }
 .issue.k-idea { border-left-color: var(--busy); }
 .issue .note-box { background: var(--info-soft); color: var(--fg); border-radius: 8px; padding: 8px 10px; font-size: 14px; }
+.prompt { display: grid; gap: 6px; margin-top: 8px; }
+.prompt-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.prompt pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 12.5px; line-height: 1.5; background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; max-height: 220px; overflow: auto; user-select: all; }
 .chips { display: flex; flex-wrap: wrap; gap: 8px; }
 .lchip { display: inline-block; max-width: 100%; font-size: 14px; font-weight: 500; text-decoration: none; color: var(--fg); background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 6px 14px; overflow-wrap: anywhere; }
 .lchip:hover { border-color: var(--accent); color: var(--accent); }
@@ -617,6 +620,16 @@ details > summary { cursor: pointer; font-weight: 500; padding: 6px 0; }
       '<div class="row">' + (safeUrl(f.sessionUrl) ? link(f.sessionUrl, "Open the live session", "btn primary") : "") + (safeUrl(f.recordUrl) ? link(f.recordUrl, "Read the record", "btn") : "") + "</div>" +
       "</div></section>";
   }
+  function copyPrompt(coll, id, btn) {
+    var list = S[coll] || [], it = list.filter(function (x) { return x.id === id; })[0]; if (!it || !it.prompt) return;
+    var pre = document.getElementById("prompt-" + coll + "-" + id);
+    var done = function () { btn.textContent = "Copied"; setTimeout(function () { btn.textContent = "Copy prompt"; }, 1500); };
+    var fallback = function () {
+      if (pre) { var r = document.createRange(); r.selectNodeContents(pre); var sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r); btn.textContent = "Selected: press Ctrl+C or Cmd+C"; }
+      setTimeout(function () { btn.textContent = "Copy prompt"; }, 2500);
+    };
+    try { navigator.clipboard.writeText(it.prompt).then(done, fallback); } catch (e) { fallback(); }
+  }
   function decisionCard(coll, i, decided) {
     var b = S.busy["d:" + coll + ":" + i.id] ? " disabled" : "";
     var cls = coll === "ideas" ? "k-idea" : "k-" + esc(i.kind);
@@ -629,6 +642,9 @@ details > summary { cursor: pointer; font-weight: 500; padding: 6px 0; }
       (i.recommendation ? '<p class="rec"><strong>' + esc(T.Chief) + " recommends:</strong> " + esc(i.recommendation) + "</p>" : "") +
       (decided && i.note ? '<p class="note-box"><strong>Note:</strong> ' + esc(i.note) + "</p>" : "") +
       (decided && i.status === "done" && i.result ? '<p class="small muted">' + esc(i.result) + "</p>" : "");
+    if (i.prompt) h += '<div class="prompt"><div class="prompt-head"><span class="small muted">Paste into ' + esc(i.promptFor || "Cowork") + '</span>' +
+      '<button class="btn outline sm" data-action="copy" data-coll="' + esc(coll) + '" data-id="' + esc(i.id) + '">Copy prompt</button></div>' +
+      '<pre id="prompt-' + esc(coll) + "-" + esc(i.id) + '">' + esc(i.prompt) + "</pre></div>";
     if (!S.readonly) {
       var k = esc(coll) + "-" + esc(i.id), at = ' data-coll="' + esc(coll) + '" data-id="' + esc(i.id) + '"' + b;
       if (decided) h += '<div class="row"><button class="linkbtn" id="undo-' + k + '" data-action="undo"' + at + ">Undo</button></div>";
@@ -1110,6 +1126,7 @@ details > summary { cursor: pointer; font-weight: 500; padding: 6px 0; }
     else if (act === "confirm-no") { S.confirm = null; var c0 = findA(id); S.focus = c0 && c0.status === "inactive" ? "act-" + id : "deact-" + id; render(); }
     else if (act === "confirm-yes") runAction(type, id);
     else if (act === "retry-live") retryLive(el.getAttribute("data-key"));
+    else if (act === "copy") copyPrompt(coll, id, el);
   });
   document.addEventListener("click", function (ev) {
     if (ev.target && ev.target.id === "dlg") closeDlg();

@@ -124,6 +124,9 @@ section { min-width: 0; }
 .body { white-space: pre-wrap; }
 .rec { background: var(--surface-2); border-radius: 8px; padding: 8px 10px; font-size: 14px; overflow-wrap: anywhere; }
 .note-box { background: var(--info-soft); border-radius: 8px; padding: 8px 10px; font-size: 14px; overflow-wrap: anywhere; }
+.prompt { display: grid; gap: 6px; }
+.prompt-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.prompt pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 12.5px; line-height: 1.5; background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; max-height: 220px; overflow: auto; user-select: all; }
 .kind-head { font-family: var(--display); font-size: 17px; margin: 16px 0 8px; }
 .kind-head:first-child { margin-top: 0; }
 .chip { font-size: 12px; background: var(--accent-soft); color: var(--accent); border-radius: 6px; padding: 2px 8px; font-weight: 500; }
@@ -206,6 +209,7 @@ details > summary { cursor: pointer; font-weight: 500; padding: 6px 0; }
 <script>
 (function () {
   "use strict";
+  var DESK_URL = ""; // optional fallback: the desk artifact URL, when meta/board has no deskUrl
   var S = { db: null, user: null, meta: null, items: [], links: [], files: [], got: {}, dberr: null, owner: false, dlgId: null };
   function $(s) { return document.querySelector(s); }
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
@@ -236,6 +240,22 @@ details > summary { cursor: pointer; font-weight: 500; padding: 6px 0; }
     return order.map(function (g) { return { name: g, list: map[g] }; });
   }
 
+  // A prompt the person pastes somewhere else (Cowork, a scheduled task, another Claude): the text, who it is for, a Copy button.
+  function promptBox(it) {
+    return '<div class="prompt"><div class="prompt-head"><span class="small muted">Paste into ' + esc(it.promptFor || "Cowork") + '</span>' +
+      '<button type="button" class="btn outline" data-act="copy" data-id="' + esc(it.id) + '">Copy prompt</button></div>' +
+      '<pre id="prompt-' + esc(it.id) + '">' + esc(it.prompt) + "</pre></div>";
+  }
+  function copyPrompt(id, btn) {
+    var it = S.items.filter(function (x) { return x.id === id; })[0]; if (!it || !it.prompt) return;
+    var pre = document.getElementById("prompt-" + id);
+    var done = function () { btn.textContent = "Copied"; setTimeout(function () { btn.textContent = "Copy prompt"; }, 1500); };
+    var fallback = function () {
+      if (pre) { var r = document.createRange(); r.selectNodeContents(pre); var sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r); btn.textContent = "Selected: press Ctrl+C or Cmd+C"; }
+      setTimeout(function () { btn.textContent = "Copy prompt"; }, 2500);
+    };
+    try { navigator.clipboard.writeText(it.prompt).then(done, fallback); } catch (e) { fallback(); }
+  }
   function itemCard(it, decided) {
     var h = '<article class="item ' + kindClass(it.kind) + (decided ? " decided" : "") + '" data-id="' + esc(it.id) + '">';
     h += '<div class="row"><span class="chip">' + esc(it.kind || "Info") + "</span>";
@@ -246,6 +266,7 @@ details > summary { cursor: pointer; font-weight: 500; padding: 6px 0; }
     if (u) h += '<p class="small"><a href="' + esc(u) + '" target="_blank" rel="noopener">Open the source</a></p>';
     if (it.recommendation) h += '<div class="rec"><strong>Recommended:</strong> ' + esc(it.recommendation) + "</div>";
     if (it.note) h += '<div class="note-box">' + esc(it.note) + "</div>";
+    if (it.prompt) h += promptBox(it);
     if (decided) {
       if (it.decidedAt) h += '<p class="small muted" title="' + esc(it.decidedAt) + '">Decided ' + esc(rel(it.decidedAt)) + "</p>";
       h += '<div class="row"><button type="button" class="linkbtn" data-act="undo" data-id="' + esc(it.id) + '">Undo</button></div>';
@@ -283,7 +304,7 @@ details > summary { cursor: pointer; font-weight: 500; padding: 6px 0; }
     $("#lane-name").textContent = (m && m.laneName) || "Lane Whiteboard";
     var sub = m ? [m.architectName, m.version].filter(Boolean).join(" ") : "";
     $("#lane-sub").textContent = sub;
-    var hl = [["Open the architect's live session", m && m.sessionUrl], ["Repo", m && m.repoUrl], ["Log", m && m.logUrl], ["Fable", m && m.fableSessionUrl]]
+    var hl = [["Back to the Desk", (m && m.deskUrl) || DESK_URL], ["Open the architect's live session", m && m.sessionUrl], ["Repo", m && m.repoUrl], ["Log", m && m.logUrl], ["Fable", m && m.fableSessionUrl]]
       .filter(function (p) { return safeUrl(p[1]); })
       .map(function (p) { return '<a href="' + esc(safeUrl(p[1])) + '" target="_blank" rel="noopener">' + esc(p[0]) + "</a>"; });
     $("#lane-links").innerHTML = hl.join("");
@@ -335,6 +356,7 @@ details > summary { cursor: pointer; font-weight: 500; padding: 6px 0; }
     else if (act === "decline") { if (await decide(id, "declined", "")) toast("Declined."); }
     else if (act === "else") openDlg(id);
     else if (act === "undo") undo(id);
+    else if (act === "copy") copyPrompt(id, b);
   });
   $("#dlg-cancel").addEventListener("click", closeDlg);
   $("#dlg").addEventListener("click", function (e) { if (e.target === $("#dlg")) closeDlg(); });

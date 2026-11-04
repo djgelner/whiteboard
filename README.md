@@ -55,6 +55,16 @@ The live parts: session state and context use, the real next-run time, and the a
 - **The owner decides from one screen.** Decisions, go-aheads and blockers are written once, with a recommendation, and decided with one click. Cadence and pause are on the same screen, so cost control does not need a conversation.
 - **Nothing is sent or paid by machine.** Architects draft and open PRs. A person sends the email, approves the spend and merges the risky change. The desk reflects that: it holds no money and sends nothing.
 
+## Lane boards link back
+
+Every lane whiteboard carries a "Back to the Desk" link in its header. It reads `deskUrl` from the lane's `meta/board` document, or the `DESK_URL` constant near the top of `lane-board.html`.
+
+## Cowork hands: a browser for the architects, set up once
+
+When an architect needs a page its cloud session cannot open, it does not stop and ask. It writes a read-only job to a queue file in the owner's Google Drive (`<Lane> inbox/QUEUE.md`), and one Cowork scheduled task on the owner's computer runs every ready job three times a day, saves the results next to the queue, and marks the job done. A single index file, `Cowork inbox/LANES.md`, lists every lane's queue, so a new lane costs the owner nothing. Anything that would send, sign in, buy or post never enters a queue: it goes on the lane's whiteboard as a prompt with a **Copy prompt** button, and the owner fires it by hand. The pattern, the task prompt, and the two file forms are in [docs/COWORK-HANDS.md](docs/COWORK-HANDS.md), [prompts/cowork-scheduled-task.md](prompts/cowork-scheduled-task.md) and [queue/](queue/).
+
+Both pages render a prompt box with a Copy prompt button on any issue, idea or lane item that carries `prompt` and `promptFor` fields.
+
 ## License
 
 MIT. See [LICENSE](LICENSE).

@@ -21,3 +21,10 @@ Rules:
 6. Limits: at most <n> tool calls and <n> subagents per run. Name the model of every subagent explicitly. Give subagents file paths, not pasted content.
 
 End with the cost: tool calls used and subagents launched with their models.
+
+## The Cowork hands paragraph (add to every tick)
+
+```
+COWORK HANDS: when a step needs a browser this session does not have (a site that blocks automated fetches, a page only the owner's own browser can open), try your own headless browser once; if that fails, a READ-ONLY job (open public pages, download public files, read and summarize) goes in the Google Drive file "<Lane> inbox/QUEUE.md" (folder id <id>, file id <id>) as a "## Job <slug>" section with "status: ready", a folder name and the exact steps, in the form the file shows; the owner's Cowork scheduled task runs ready jobs three times a day and writes the results to "<Lane> inbox/<folder>/", and a later run reads them with the Google Drive tools. If the Google Drive tools are not in this session, write the job in the same form as a line in the log and the chief of staff copies it into the queue. Anything that would submit a form, sign in, buy, post or send never goes in the queue: it goes on the whiteboard as an item with a prompt field (the exact text) and a promptFor field ("Cowork" or "Claude"); the board shows a Copy prompt button, the owner fires it by hand, and the hard gates still apply to what the prompt may ask.
+```
+
