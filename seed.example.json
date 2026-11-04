@@ -1,0 +1,110 @@
+{
+  "meta": {
+    "board": {
+      "updatedAt": "2026-01-15T17:30:00Z",
+      "fable": {
+        "name": "Chief of Staff (example)",
+        "role": "Plans, prioritizes, merges and rotates the architects, and keeps this board",
+        "sessionId": "session_EXAMPLE0",
+        "sessionUrl": "https://example.com/sessions/session_EXAMPLE0",
+        "checkins": "08:30Z (planning run) and 20:30Z (execution check), each armed by the previous one",
+        "nextCheckin": "2026-01-15T20:30:00Z",
+        "nextCheckinTriggerId": "trig_EXAMPLE0",
+        "recordUrl": "https://example.com/example-org/ops/blob/main/CONTINUITY.md",
+        "coSession": {
+          "name": "Example co-session (merges two lanes until the chief of staff can attach them)",
+          "sessionId": "session_EXAMPLE9",
+          "sessionUrl": "https://example.com/sessions/session_EXAMPLE9"
+        }
+      }
+    }
+  },
+  "architects": [
+    {
+      "id": "newsletter",
+      "order": 1,
+      "name": "Newsletter Architect",
+      "lane": "The weekly newsletter: one issue drafted per run from the idea queue, never sent by machine",
+      "status": "scheduled",
+      "version": "v6",
+      "model": "Example Model",
+      "sessionId": "session_EXAMPLE1",
+      "sessionUrl": "https://example.com/sessions/session_EXAMPLE1",
+      "repo": "example-org/newsletter",
+      "repoUrl": "https://example.com/example-org/newsletter",
+      "logUrl": "https://example.com/example-org/newsletter/blob/main/docs/LOG.md",
+      "tickId": "trig_EXAMPLE1",
+      "cron": "32 */3 * * *",
+      "cadence": "Every 3 hours at :32 UTC (8 runs a day)",
+      "whiteboardUrl": "https://example.com/whiteboards/newsletter",
+      "whiteboardTitle": "Newsletter Whiteboard",
+      "liveUrl": "https://example.com/newsletter",
+      "lastRun": "v5 drafted issue 41 and filed it for review; v6 starts issue 42 at the next tick",
+      "lastRunAt": "2026-01-15T15:13:00Z",
+      "notes": "Drafts only. The owner sends each issue by hand from the mail tool.",
+      "merges": "PR-only; merges on the owner's word in the lane's chat, otherwise the chief of staff",
+      "updatedAt": "2026-01-15T17:30:00Z"
+    },
+    {
+      "id": "docs-site",
+      "order": 2,
+      "name": "Docs Site Architect",
+      "lane": "The public documentation site: one page or fix per run from the issue list",
+      "status": "as-needed",
+      "version": "v2",
+      "model": "Example Model",
+      "sessionId": "session_EXAMPLE2",
+      "sessionUrl": "https://example.com/sessions/session_EXAMPLE2",
+      "repo": "example-org/docs-site",
+      "repoUrl": "https://example.com/example-org/docs-site",
+      "logUrl": "https://example.com/example-org/docs-site/blob/main/LOG.md",
+      "tickId": "trig_EXAMPLE2",
+      "cron": "7 14 * * *",
+      "cadence": "Once a day at 14:07 UTC",
+      "whiteboardUrl": "",
+      "whiteboardTitle": "",
+      "liveUrl": "https://example.com/docs",
+      "lastRun": "v2 rewrote the install page and opened a PR; waiting on a merge",
+      "lastRunAt": "2026-01-14T14:20:00Z",
+      "notes": "Runs when the issue list has work; the chief of staff pauses it when the list is empty.",
+      "merges": "PR-only; the chief of staff merges when checks pass",
+      "updatedAt": "2026-01-15T17:30:00Z"
+    }
+  ],
+  "issues": [
+    {
+      "id": "pricing-page",
+      "order": 1,
+      "kind": "decision",
+      "lane": "Docs Site",
+      "title": "Which pricing page wording ships",
+      "body": "Two versions of the pricing page intro are in the open PR. One leads with the free tier, the other with the team plan.",
+      "recommendation": "Ship the free-tier version and revisit after two weeks of traffic.",
+      "status": "open",
+      "createdAt": "2026-01-14T00:00:00Z"
+    },
+    {
+      "id": "issue-42-send",
+      "order": 2,
+      "kind": "go-ahead",
+      "lane": "Newsletter",
+      "title": "Issue 41 is ready to send",
+      "body": "The draft passed the review checklist. Nothing is sent by machine, so it waits for you to send it from the mail tool.",
+      "recommendation": "Send it Thursday morning.",
+      "status": "open",
+      "createdAt": "2026-01-15T00:00:00Z"
+    },
+    {
+      "id": "domain-renewal",
+      "order": 3,
+      "kind": "blocker",
+      "lane": "Docs Site",
+      "title": "Domain renewal needs a card",
+      "body": "The docs domain renews in nine days and the card on file expires before then. The lane cannot touch billing.",
+      "recommendation": "Update the card this week.",
+      "status": "open",
+      "createdAt": "2026-01-15T00:00:00Z"
+    }
+  ],
+  "requests": []
+}

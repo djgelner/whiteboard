@@ -1,0 +1,993 @@
+<title>Architect Desk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Newsreader:opsz,wght@6..72,500;6..72,600&display=swap">
+<style>
+:root {
+  --bg: #f1f0eb;
+  --surface: #fbfaf7;
+  --surface-2: #e9e7df;
+  --fg: #1d2127;
+  --fg-muted: #5b616a;
+  --line: #d8d5ca;
+  --accent: #2c5fb3;
+  --accent-fg: #ffffff;
+  --accent-soft: #dfe8f6;
+  --ok: #1f7a4d;
+  --ok-soft: #dcefe3;
+  --warn: #8f5500;
+  --warn-soft: #f6e7c8;
+  --danger: #b3322a;
+  --danger-soft: #f6dcd8;
+  --info: #4b5b70;
+  --info-soft: #e1e6ed;
+  --busy: #5b43a8;
+  --busy-soft: #e8e2f6;
+  --shadow: 0 1px 0 rgba(29, 33, 39, 0.04), 0 8px 24px -16px rgba(29, 33, 39, 0.25);
+  --display: "Newsreader", "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  --body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111418;
+    --surface: #181c21;
+    --surface-2: #20252b;
+    --fg: #e4e6e8;
+    --fg-muted: #9aa2ab;
+    --line: #2b3138;
+    --accent: #7ba6ec;
+    --accent-fg: #0d1420;
+    --accent-soft: #1c2a44;
+    --ok: #5fc68f;
+    --ok-soft: #14301f;
+    --warn: #e2b04d;
+    --warn-soft: #3a2d10;
+    --danger: #ef8a80;
+    --danger-soft: #3b1a17;
+    --info: #a3b3c8;
+    --info-soft: #222b36;
+    --busy: #b7a1f2;
+    --busy-soft: #2a2145;
+    --shadow: 0 1px 0 rgba(0, 0, 0, 0.3), 0 8px 24px -16px rgba(0, 0, 0, 0.7);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111418;
+  --surface: #181c21;
+  --surface-2: #20252b;
+  --fg: #e4e6e8;
+  --fg-muted: #9aa2ab;
+  --line: #2b3138;
+  --accent: #7ba6ec;
+  --accent-fg: #0d1420;
+  --accent-soft: #1c2a44;
+  --ok: #5fc68f;
+  --ok-soft: #14301f;
+  --warn: #e2b04d;
+  --warn-soft: #3a2d10;
+  --danger: #ef8a80;
+  --danger-soft: #3b1a17;
+  --info: #a3b3c8;
+  --info-soft: #222b36;
+  --busy: #b7a1f2;
+  --busy-soft: #2a2145;
+  --shadow: 0 1px 0 rgba(0, 0, 0, 0.3), 0 8px 24px -16px rgba(0, 0, 0, 0.7);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--body);
+  font-size: 15px;
+  line-height: 1.5;
+  font-variant-numeric: tabular-nums;
+}
+a { color: var(--accent); text-underline-offset: 2px; }
+a:hover { text-decoration-thickness: 2px; }
+h1, h2, h3, h4 { font-family: var(--display); font-weight: 600; line-height: 1.2; margin: 0; letter-spacing: 0.005em; }
+h1 { font-size: 28px; }
+h2 { font-size: 22px; }
+h3 { font-size: 18px; }
+h4 { font-size: 16px; }
+p { margin: 0; }
+code, .mono { font-family: var(--mono); font-size: 0.9em; }
+.num { font-variant-numeric: tabular-nums; }
+.muted { color: var(--fg-muted); }
+.small { font-size: 13px; }
+
+:where(a, button, select, input, summary):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.page {
+  --gl: max(16px, env(safe-area-inset-left, 0px));
+  --gr: max(16px, env(safe-area-inset-right, 0px));
+  max-width: 1120px;
+  margin: 0 auto;
+  padding-left: var(--gl);
+  padding-right: var(--gr);
+  padding-block: 20px 56px;
+}
+.masthead { padding-bottom: 14px; display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; justify-content: space-between; }
+.masthead .sub { color: var(--fg-muted); font-size: 13px; min-width: 0; }
+.role-chip { font-size: 12px; border: 1px solid var(--line); border-radius: 999px; padding: 2px 10px; color: var(--fg-muted); }
+
+.tabs {
+  position: sticky;
+  top: env(safe-area-inset-top, 0px);
+  z-index: 20;
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  margin-left: calc(-1 * var(--gl));
+  margin-right: calc(-1 * var(--gr));
+  padding: 8px var(--gr) 8px var(--gl);
+  background: var(--bg);
+  border-bottom: 1px solid var(--line);
+  -webkit-overflow-scrolling: touch;
+}
+.tab {
+  flex: 0 0 auto;
+  white-space: nowrap;
+  text-decoration: none;
+  color: var(--fg-muted);
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 14px;
+  border: 1px solid transparent;
+}
+.tab:hover { color: var(--fg); background: var(--surface-2); }
+.tab[aria-current="page"] { color: var(--fg); background: var(--surface); border-color: var(--line); box-shadow: inset 0 -2px 0 var(--accent); }
+
+main { padding-top: 22px; display: grid; gap: 28px; min-width: 0; }
+section { min-width: 0; }
+.sec-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 12px; margin-bottom: 12px; }
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 18px;
+  box-shadow: var(--shadow);
+  min-width: 0;
+}
+.grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.row > * { min-width: 0; }
+.stack { display: grid; gap: 10px; min-width: 0; }
+
+.banner { border-radius: 10px; padding: 10px 14px; font-size: 14px; border: 1px solid var(--line); background: var(--surface-2); }
+.banner.warn { background: var(--warn-soft); color: var(--warn); border-color: transparent; }
+.banner.err { background: var(--danger-soft); color: var(--danger); border-color: transparent; }
+
+.btn {
+  font: inherit;
+  font-weight: 500;
+  font-size: 14px;
+  min-height: 40px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--fg);
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.btn:hover:not(:disabled) { background: var(--surface-2); }
+.btn:disabled { opacity: 0.55; cursor: not-allowed; }
+.btn.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+.btn.primary:hover:not(:disabled) { background: var(--accent); filter: brightness(1.08); }
+.btn.danger { color: var(--danger); border-color: var(--danger); background: transparent; }
+.btn.danger:hover:not(:disabled) { background: var(--danger-soft); }
+.btn.sm { min-height: 32px; padding: 4px 10px; font-size: 13px; }
+
+.lk-row { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 14px; }
+
+.pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 12px; font-weight: 600; letter-spacing: 0.02em;
+  padding: 2px 10px; border-radius: 999px; white-space: nowrap;
+  background: var(--surface-2); color: var(--fg-muted);
+}
+.pill::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.pill.scheduled { background: var(--ok-soft); color: var(--ok); }
+.pill.as-needed { background: var(--info-soft); color: var(--info); }
+.pill.inactive { background: var(--surface-2); color: var(--fg-muted); }
+.pill.working { background: var(--busy-soft); color: var(--busy); }
+.pill.idle { background: var(--surface-2); color: var(--fg-muted); }
+.pill.blocked, .pill.failed { background: var(--danger-soft); color: var(--danger); }
+.pill.other { background: var(--warn-soft); color: var(--warn); }
+.tag { font-size: 12px; color: var(--fg-muted); border: 1px dashed var(--line); border-radius: 6px; padding: 1px 7px; white-space: nowrap; }
+.tag.live { color: var(--ok); border: 1px solid var(--ok); border-style: solid; }
+.chip { font-size: 12px; background: var(--accent-soft); color: var(--accent); border-radius: 6px; padding: 2px 8px; font-weight: 500; }
+
+.facts { display: grid; gap: 12px 20px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr)); margin: 0; }
+.fact { min-width: 0; }
+.fact dt { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--fg-muted); margin-bottom: 2px; }
+.fact dd { margin: 0; overflow-wrap: anywhere; }
+
+.issue { border: 1px solid var(--line); border-radius: 10px; padding: 14px; background: var(--surface); display: grid; gap: 8px; min-width: 0; border-left: 4px solid var(--info); }
+.issue.k-decision { border-left-color: var(--accent); }
+.issue.k-go-ahead { border-left-color: var(--ok); }
+.issue.k-blocker { border-left-color: var(--danger); }
+.issue-top { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.issue .rec { background: var(--surface-2); border-radius: 8px; padding: 8px 10px; font-size: 14px; }
+.issue p { overflow-wrap: anywhere; }
+.kind-head { font-family: var(--display); font-size: 17px; margin: 14px 0 8px; display: flex; gap: 8px; align-items: baseline; }
+.kind-head:first-child { margin-top: 0; }
+
+.tablewrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; min-width: 820px; }
+th, td { text-align: left; padding: 12px 14px; vertical-align: top; border-bottom: 1px solid var(--line); font-size: 14px; }
+th { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--fg-muted); font-weight: 600; background: var(--surface-2); }
+tr:last-child td { border-bottom: 0; }
+td .name { font-weight: 600; font-size: 15px; }
+td .row { gap: 4px 8px; }
+
+.panel { border: 1px solid var(--danger); background: var(--danger-soft); border-radius: 10px; padding: 14px; display: grid; gap: 10px; }
+.panel.ok { border-color: var(--accent); background: var(--accent-soft); }
+.field { display: grid; gap: 4px; min-width: 0; }
+.field label { font-size: 13px; font-weight: 500; }
+select, input[type="text"] {
+  font: inherit; color: var(--fg); background: var(--bg);
+  border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; min-height: 40px; width: 100%; min-width: 0;
+}
+input.mono { font-family: var(--mono); }
+.form-grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); align-items: end; }
+.err-text { color: var(--danger); font-size: 13px; }
+details > summary { cursor: pointer; font-weight: 500; padding: 6px 0; }
+.empty { text-align: left; padding: 28px 22px; display: grid; gap: 8px; }
+.empty h2 { font-size: 20px; }
+
+#toasts { position: fixed; z-index: 50; left: 0; right: 0; bottom: max(16px, env(safe-area-inset-bottom, 0px)); display: grid; gap: 8px; justify-items: center; padding: 0 16px; pointer-events: none; }
+.toast { pointer-events: auto; max-width: 560px; background: var(--fg); color: var(--bg); border-radius: 10px; padding: 10px 14px; font-size: 14px; box-shadow: var(--shadow); animation: rise 0.18s ease-out; }
+.toast.err { background: var(--danger); color: #fff; }
+@keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}
+@media (max-width: 520px) {
+  h1 { font-size: 24px; }
+  .card { padding: 14px; }
+}
+</style>
+
+<div class="page">
+  <header class="masthead">
+    <div>
+      <h1 id="brand">Architect Desk</h1>
+      <div class="sub" id="brand-sub"></div>
+    </div>
+    <span class="role-chip" id="role-chip" hidden></span>
+  </header>
+  <nav class="tabs" id="nav" aria-label="Desk sections"></nav>
+  <main id="view" tabindex="-1"></main>
+</div>
+<div id="toasts" role="status" aria-live="polite"></div>
+
+<script>
+(function () {
+  "use strict";
+
+  // Copy that differs between deployments of the desk.
+  var T = {
+    brand: "Architect Desk",
+    chief: "the Chief of Staff",
+    Chief: "The Chief of Staff",
+    chiefPoss: "the Chief of Staff's",
+    ChiefPoss: "The Chief of Staff's",
+    owner: "the owner",
+    empty: "Seed the board from seed.example.json (see README)."
+  };
+  var SERVER = "Claude Code Remote";
+  var LS_KEY = "desk-last-tab";
+
+  var PRESETS = [
+    { id: "p3h", label: "Every 3 hours at :32", cron: "32 */3 * * *", cadence: "Every 3 hours at :32 UTC (8 runs a day)" },
+    { id: "p6d", label: "Six runs a day at :17", cron: "17 0,4,8,12,16,20 * * *", cadence: "Six runs a day at :17 UTC (00, 04, 08, 12, 16, 20)" },
+    { id: "p4d", label: "Four runs a day at :05", cron: "5 0,6,12,18 * * *", cadence: "Four runs a day at :05 UTC (00, 06, 12, 18)" },
+    { id: "p1d", label: "Daily at 14:07 UTC", cron: "7 14 * * *", cadence: "Once a day at 14:07 UTC" },
+    { id: "custom", label: "Custom cron", cron: "", cadence: "" }
+  ];
+  var KINDS = [["decision", "Decisions"], ["go-ahead", "Go-aheads"], ["blocker", "Blockers"]];
+  // Codes meaning "this view cannot use the connector": show the record, hide live parts.
+  var DENIED = {
+    not_in_manifest: 1, not_granted: 1, capability_disabled: 1, capability_removed: 1,
+    blocked_by_policy: 1, consent_required: 1, self_only: 1, approval_required: 1,
+    server_not_connected: 1, needs_reauth: 1, selection_required: 1, server_not_found: 1, user_changed: 1
+  };
+
+  var S = {
+    db: null, user: null, mcp: null, readonly: false, role: "",
+    arch: [], issues: [], reqs: [], meta: null,
+    got: { arch: false, issues: false, reqs: false, meta: false },
+    fresh: {}, slow: {}, dberr: null, booted: false,
+    live: {}, watches: {}, watchSig: "", watchInputs: {},
+    route: "home", draft: {}, confirm: null, busy: {}, now: Date.now(),
+    focus: null, doneOpen: false, notice: {}
+  };
+
+  /* ---------- helpers ---------- */
+  function $(s) { return document.querySelector(s); }
+  function esc(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+  function safeUrl(u) { u = String(u || ""); return /^https:\/\//i.test(u) ? u : ""; }
+  function link(u, label, cls) {
+    u = safeUrl(u);
+    if (!u) return "";
+    return '<a class="' + (cls || "") + '" href="' + esc(u) + '" target="_blank" rel="noopener noreferrer">' + esc(label) + "</a>";
+  }
+  function iso() { return new Date().toISOString(); }
+  function today() { return iso().slice(0, 10); }
+  function absT(s) {
+    var t = Date.parse(s);
+    return isNaN(t) ? "" : new Date(t).toISOString().replace("T", " ").slice(0, 16) + " UTC";
+  }
+  function rel(s) {
+    if (!s) return "never";
+    var t = Date.parse(s);
+    if (isNaN(t)) return String(s);
+    var d = t - S.now, fut = d > 0, sec = Math.abs(d) / 1000;
+    if (sec < 45) return fut ? "in under a minute" : "just now";
+    var m = Math.round(sec / 60);
+    if (m < 60) return fut ? "in " + m + " min" : m + " min ago";
+    var h = Math.round(sec / 3600);
+    if (h < 24) return fut ? "in " + h + " h" : h + " h ago";
+    var days = Math.round(sec / 86400);
+    if (days === 1) return fut ? "tomorrow" : "yesterday";
+    if (days < 30) return fut ? "in " + days + " days" : days + " days ago";
+    return new Date(t).toISOString().slice(0, 10);
+  }
+  function tm(s) {
+    if (!s) return "never";
+    return '<span title="' + esc(absT(s)) + '">' + esc(rel(s)) + "</span>";
+  }
+  function fmtTok(n) {
+    n = Number(n);
+    if (!isFinite(n)) return "?";
+    if (n >= 1000000) return String(Math.round(n / 100000) / 10).replace(/\.0$/, "") + "M";
+    return Math.round(n / 1000) + "K";
+  }
+  function payload(res) {
+    var p = res && res.payload;
+    if (typeof p === "string") { try { p = JSON.parse(p); } catch (e) { /* keep text */ } }
+    return p;
+  }
+  function shortName(n) { return String(n || "").replace(/\s+Architect$/i, ""); }
+  function byOrder(a, b) { return (Number(a.order) || 0) - (Number(b.order) || 0); }
+  function findA(id) { for (var i = 0; i < S.arch.length; i++) if (S.arch[i].id === id) return S.arch[i]; return null; }
+  function activeA() { return S.arch.filter(function (a) { return a.status !== "inactive"; }); }
+  function inactiveA() { return S.arch.filter(function (a) { return a.status === "inactive"; }); }
+  function presetByCron(c) { for (var i = 0; i < PRESETS.length; i++) if (PRESETS[i].cron && PRESETS[i].cron === c) return PRESETS[i]; return null; }
+  function cadenceFor(cron) { var p = presetByCron(cron); return p ? p.cadence : "Custom: " + cron; }
+  function normCron(c) { return String(c || "").trim().replace(/\s+/g, " "); }
+  function cronErr(c) {
+    if (!c) return "Enter a cron with five fields, for example 7 14 * * *.";
+    if (c.split(" ").length !== 5) return "A cron needs exactly five fields separated by spaces: minute hour day month weekday.";
+    if (!/^[0-9A-Za-z*\/,\-?#LW ]+$/.test(c)) return "That cron has characters a schedule cannot use. Use digits, *, /, comma and dash.";
+    return "";
+  }
+  function hasMcp() { return !!S.mcp; }
+  function dbMsg(e) {
+    var c = e && e.code;
+    if (c === "invalid_argument") return "The board refused that change. Only the owner and admins can edit it.";
+    if (c === "unavailable" || c === "resource_exhausted") return "The board could not be reached right now. Wait a moment and try again.";
+    if (c === "revoked") return "Your access to this board changed. Reload the page from claude.ai.";
+    if (c === "quota_exceeded") return "The board is full. Ask " + T.chief + " to prune old requests.";
+    return (e && e.message) || "The board could not save that change.";
+  }
+
+  /* ---------- toasts ---------- */
+  function toast(msg, kind) {
+    var box = $("#toasts"); if (!box) return;
+    var el = document.createElement("div");
+    el.className = "toast" + (kind === "err" ? " err" : "");
+    el.textContent = msg;
+    box.appendChild(el);
+    setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, kind === "err" ? 8000 : 5000);
+  }
+
+  /* ---------- rendering ---------- */
+  var rq = 0, lastNav = "", lastView = "";
+  function render() { if (rq) return; rq = setTimeout(doRender, 16); }
+
+  function doRender() {
+    rq = 0;
+    S.now = Date.now();
+    var ae = document.activeElement, aid = ae && ae.id ? ae.id : "", ss = null, se = null;
+    if (ae && ae.tagName === "INPUT" && typeof ae.selectionStart === "number") { ss = ae.selectionStart; se = ae.selectionEnd; }
+    var navEl = $("#nav"), viewEl = $("#view");
+    if (!navEl || !viewEl) return;
+    var nh = navHtml(), vh = viewHtml();
+    if (nh !== lastNav) { navEl.innerHTML = nh; lastNav = nh; }
+    if (vh !== lastView) { viewEl.innerHTML = vh; lastView = vh; }
+    var sub = $("#brand-sub");
+    if (sub) sub.textContent = S.meta && S.meta.updatedAt ? "Board updated " + rel(S.meta.updatedAt) : "";
+    var chip = $("#role-chip");
+    if (chip) { chip.hidden = !S.role; chip.textContent = S.role; }
+    var want = S.focus || aid;
+    if (want) {
+      var f = document.getElementById(want);
+      if (f && f !== document.activeElement) {
+        try { f.focus({ preventScroll: !S.focus }); } catch (e) { /* ignore */ }
+        if (ss != null && f.setSelectionRange && !S.focus) { try { f.setSelectionRange(ss, se); } catch (e2) { /* ignore */ } }
+      }
+      S.focus = null;
+    }
+    syncWatches();
+  }
+
+  function navHtml() {
+    var items = [["home", "Home"]];
+    activeA().forEach(function (a) { items.push(["a-" + a.id, shortName(a.name)]); });
+    var n = inactiveA().length;
+    items.push(["inactive", "Inactive" + (n ? " (" + n + ")" : "")]);
+    var cur = S.route;
+    var m = /^a-(.+)$/.exec(cur);
+    if (m) { var a = findA(m[1]); if (a && a.status === "inactive") cur = "inactive"; }
+    return items.map(function (it) {
+      return '<a class="tab" href="#' + esc(it[0]) + '"' + (it[0] === cur ? ' aria-current="page"' : "") + ">" + esc(it[1]) + "</a>";
+    }).join("");
+  }
+
+  function loadingState() {
+    return '<div class="card muted">Loading the board...</div>';
+  }
+  function banners() {
+    var h = "";
+    if (S.dberr) h += '<div class="banner err">The board stopped updating (' + esc(S.dberr.code || "error") + "). What you see may be out of date. Reload the page to reconnect.</div>";
+    else if (S.slow.arch || S.slow.issues || S.slow.reqs || S.slow.meta) h += '<div class="banner warn">The board is slow to answer. What you see may be out of date.</div>';
+    if (S.readonly) h += '<div class="banner">View only. The owner and admins change cadences, pause lanes and mark items done.</div>';
+    return h;
+  }
+
+  function viewHtml() {
+    if (!S.booted) return loadingState();
+    if (!S.db) {
+      return '<div class="card empty"><h2>The board cannot open here</h2><p class="muted">This view has no access to the board database. Open the page from claude.ai while signed in.</p></div>';
+    }
+    var allGot = S.got.arch && S.got.issues && S.got.reqs && S.got.meta;
+    if (!allGot && !S.arch.length) return banners() + loadingState();
+    if (allGot && !S.arch.length && !S.issues.length && !S.meta) {
+      return banners() + '<div class="card empty"><h2>Nothing on the board yet</h2><p>' + esc(T.empty) + "</p></div>";
+    }
+    var body;
+    var m = /^a-(.+)$/.exec(S.route);
+    if (m) body = archView(m[1]);
+    else if (S.route === "inactive") body = inactiveView();
+    else body = homeView();
+    return banners() + body;
+  }
+
+  /* ----- live data helpers ----- */
+  function liveOf(key) { return S.live[key] || null; }
+  function sessionOf(a) { var L = a.sessionId && liveOf("s:" + a.sessionId); return L && L.data && L.data.ccr ? L : null; }
+  function trigOf(a) { var L = a.tickId && liveOf("t:" + a.tickId); return L && L.data && L.data.trigger ? L : null; }
+
+  function stateOf(ccr) {
+    var b = String(ccr.status_bucket || ""), st = String(ccr.session_status || "");
+    if (/WORKING/.test(b)) return ["working", "Working"];
+    if (/BLOCKED/.test(b)) return ["blocked", "Blocked"];
+    if (/FAILED/.test(b)) return ["failed", "Last turn failed"];
+    if (/IDLE|COMPLETED|REVIEW/.test(b + st)) return ["idle", "Idle"];
+    if (/RUNNING/.test(st)) return ["working", "Working"];
+    var raw = (st || b).replace(/^SESSION_STATUS(_BUCKET)?_/, "").toLowerCase().replace(/_/g, " ");
+    return ["other", raw ? raw.charAt(0).toUpperCase() + raw.slice(1) : "Unknown"];
+  }
+  function ctxText(ccr) {
+    var u = ccr.external_metadata && ccr.external_metadata.context_usage;
+    if (!u || u.used_tokens == null) return "";
+    return '<span class="num">' + esc(fmtTok(u.used_tokens)) + " of " + esc(u.max_tokens ? fmtTok(u.max_tokens) : "?") + "</span>";
+  }
+  function errNote(key, label) {
+    var L = liveOf(key), e = L && L.err;
+    if (!e) return "";
+    if (e.retryable) {
+      return '<span class="small muted">' + esc(label) + ' read failed. <button class="btn sm" data-action="retry-live" data-key="' + esc(key) + '">Try again</button></span>';
+    }
+    if (DENIED[e.code]) {
+      if (e.code === "needs_reauth") return '<span class="small muted">Reconnect ' + SERVER + " in claude.ai Settings, Connectors, to see live state.</span>";
+      if (e.code === "server_not_connected") return '<span class="small muted">Add ' + SERVER + " in claude.ai Settings, Connectors, to see live state.</span>";
+      return "";
+    }
+    return '<span class="small err-text">' + esc(label) + " read failed: " + esc(e.message || "unknown error") + "</span>";
+  }
+
+  function liveCell(a) {
+    var s = sessionOf(a);
+    if (s) {
+      var c = s.data.ccr, st = stateOf(c);
+      return '<div class="stack" style="gap:4px"><div class="row"><span class="pill ' + st[0] + '">' + esc(st[1]) + '</span><span class="tag live" title="' + esc(absT(new Date(s.at).toISOString())) + '">live, ' + esc(rel(new Date(s.at).toISOString())) + "</span></div>" +
+        '<div class="small">' + (ctxText(c) ? "Context " + ctxText(c) + ". " : "") + (c.updated_at ? "Active " + tm(c.updated_at) + "." : "") + "</div>" +
+        errNote("s:" + a.sessionId, "Session") + "</div>";
+    }
+    return '<div class="stack" style="gap:4px"><span class="tag">from the record</span><div class="small muted">Last run ' + tm(a.lastRunAt) + "</div>" +
+      (a.sessionId ? errNote("s:" + a.sessionId, "Session") : "") + "</div>";
+  }
+  function nextRunHtml(a) {
+    var t = trigOf(a);
+    if (t) {
+      var tr = t.data.trigger;
+      if (tr.enabled === false) return '<span class="pill inactive">Paused</span>';
+      return '<span title="' + esc(absT(tr.next_run_at)) + '">' + esc(rel(tr.next_run_at)) + '</span><div class="small muted"><code>' + esc(tr.cron_expression || a.cron) + "</code></div>";
+    }
+    if (a.status === "inactive") return '<span class="muted">Paused</span>';
+    return (a.cron ? "<code>" + esc(a.cron) + "</code>" : '<span class="muted">No cron on record</span>') + '<div class="small muted">from the record</div>' + (a.tickId ? errNote("t:" + a.tickId, "Tick") : "");
+  }
+  function linksHtml(a, withLive) {
+    var parts = [];
+    if (a.sessionUrl) parts.push(link(a.sessionUrl, withLive ? "Open live session" : "Session"));
+    if (a.whiteboardUrl) parts.push(link(a.whiteboardUrl, "Whiteboard"));
+    if (a.repoUrl) parts.push(link(a.repoUrl, "Repo"));
+    if (a.logUrl) parts.push(link(a.logUrl, "Log"));
+    if (withLive && a.liveUrl) parts.push(link(a.liveUrl, "Live site"));
+    return parts.join("");
+  }
+
+  /* ----- HOME ----- */
+  function homeView() {
+    return fableCard() + waitingSection() + architectsTable() + pendingSection();
+  }
+  function fableCard() {
+    var f = S.meta && S.meta.fable;
+    if (!f) return "";
+    var co = f.coSession || {};
+    return '<section aria-labelledby="fable-h"><div class="card stack">' +
+      '<div class="row" style="justify-content:space-between"><h2 id="fable-h">' + esc(f.name || T.chief) + "</h2>" +
+      (S.meta.updatedAt ? '<span class="small muted">Board updated ' + tm(S.meta.updatedAt) + "</span>" : "") + "</div>" +
+      '<p class="muted">' + esc(f.role || "") + "</p>" +
+      '<dl class="facts">' +
+      '<div class="fact"><dt>Check-ins</dt><dd>' + esc(f.checkins || "Not set") + "</dd></div>" +
+      '<div class="fact"><dt>Next check-in</dt><dd>' + (f.nextCheckin ? tm(f.nextCheckin) + ' <span class="small muted">' + esc(absT(f.nextCheckin)) + "</span>" : "Not armed") + "</dd></div>" +
+      (co.name ? '<div class="fact"><dt>Co-session</dt><dd>' + esc(co.name) + (co.sessionUrl ? "<br>" + link(co.sessionUrl, "Open the co-session") : "") + "</dd></div>" : "") +
+      "</dl>" +
+      '<div class="row">' + (safeUrl(f.sessionUrl) ? link(f.sessionUrl, "Open the live session", "btn primary") : "") + (safeUrl(f.recordUrl) ? link(f.recordUrl, "Read the record", "btn") : "") + "</div>" +
+      "</div></section>";
+  }
+  function issueCard(i, done) {
+    var b = S.busy["i:" + i.id] ? " disabled" : "";
+    return '<article class="issue k-' + esc(i.kind) + '">' +
+      '<div class="issue-top"><span class="chip">' + esc(i.lane || "General") + "</span>" + (done && i.doneAt ? '<span class="small muted">done ' + tm(i.doneAt) + "</span>" : (i.createdAt ? '<span class="small muted">raised ' + tm(i.createdAt) + "</span>" : "")) + "</div>" +
+      "<h4>" + esc(i.title) + "</h4>" +
+      (i.body ? "<p>" + esc(i.body) + "</p>" : "") +
+      (i.recommendation ? '<p class="rec"><strong>' + esc(T.Chief) + " recommends:</strong> " + esc(i.recommendation) + "</p>" : "") +
+      (S.readonly ? "" : '<div class="row"><button class="btn sm" id="issue-' + (done ? "undo" : "done") + "-" + esc(i.id) + '" data-action="' + (done ? "issue-undo" : "issue-done") + '" data-id="' + esc(i.id) + '"' + b + ">" + (done ? "Undo" : "Mark done") + "</button></div>") +
+      "</article>";
+  }
+  function waitingSection() {
+    var open = S.issues.filter(function (i) { return i.status !== "done"; }).sort(byOrder);
+    var done = S.issues.filter(function (i) { return i.status === "done"; }).sort(function (a, b) { return String(b.doneAt || "").localeCompare(String(a.doneAt || "")); });
+    var h = '<section aria-labelledby="wait-h"><div class="sec-head"><h2 id="wait-h">Waiting on ' + esc(T.owner) + '</h2><span class="small muted">' + open.length + " open</span></div>";
+    if (!open.length) h += '<div class="card muted">Nothing is waiting on you.</div>';
+    else {
+      h += '<div class="stack">';
+      var known = {};
+      KINDS.forEach(function (k) {
+        var list = open.filter(function (i) { return i.kind === k[0]; });
+        list.forEach(function (i) { known[i.id] = 1; });
+        if (!list.length) return;
+        h += '<div><div class="kind-head">' + esc(k[1]) + ' <span class="small muted">' + list.length + '</span></div><div class="grid">' + list.map(function (i) { return issueCard(i, false); }).join("") + "</div></div>";
+      });
+      var rest = open.filter(function (i) { return !known[i.id]; });
+      if (rest.length) h += '<div><div class="kind-head">Other</div><div class="grid">' + rest.map(function (i) { return issueCard(i, false); }).join("") + "</div></div>";
+      h += "</div>";
+    }
+    if (done.length) {
+      h += '<details id="done-details" style="margin-top:14px"' + (S.doneOpen ? " open" : "") + "><summary>Done (" + done.length + ')</summary><div class="grid" style="margin-top:8px">' + done.map(function (i) { return issueCard(i, true); }).join("") + "</div></details>";
+    }
+    return h + "</section>";
+  }
+  function architectsTable() {
+    var act = activeA();
+    var newest = 0;
+    act.forEach(function (a) { var s = sessionOf(a); if (s && s.at > newest) newest = s.at; });
+    var note = newest ? "Live state refreshed " + rel(new Date(newest).toISOString()) + "." : (hasMcp() ? "Reading live state..." : "Live state is not available in this view. Showing the record.");
+    var h = '<section aria-labelledby="arch-h"><div class="sec-head"><h2 id="arch-h">Current architects</h2><span class="small muted">' + esc(note) + "</span></div>";
+    if (!act.length) return h + '<div class="card muted">No architect is scheduled. Check the Inactive tab.</div></section>';
+    h += '<div class="tablewrap"><table><thead><tr><th>Architect</th><th>Live state</th><th>Cadence</th><th>Next run</th><th>Links</th></tr></thead><tbody>';
+    act.forEach(function (a) {
+      h += "<tr><td><div class=\"name\"><a href=\"#a-" + esc(a.id) + '">' + esc(a.name) + '</a></div><div class="row" style="margin-top:4px"><span class="pill ' + esc(a.status) + '">' + esc(a.status) + "</span></div></td>" +
+        "<td>" + liveCell(a) + "</td>" +
+        "<td>" + esc(a.cadence || "Not set") + "</td>" +
+        "<td>" + nextRunHtml(a) + "</td>" +
+        '<td><div class="row">' + linksHtml(a, false) + "</div></td></tr>";
+    });
+    return h + "</tbody></table></div></section>";
+  }
+  function reqText(r) {
+    if (r.type === "cadence") return "Change cadence to " + (r.value ? r.value : "a new cron");
+    if (r.type === "deactivate") return "Pause the lane";
+    if (r.type === "activate") return "Resume the lane" + (r.value ? " on " + r.value : "");
+    return r.type;
+  }
+  function pendingSection() {
+    var p = S.reqs.filter(function (r) { return r.status === "pending"; }).sort(function (a, b) { return String(b.requestedAt || "").localeCompare(String(a.requestedAt || "")); });
+    var h = '<section aria-labelledby="req-h"><div class="sec-head"><h2 id="req-h">Pending requests</h2><span class="small muted">' + esc(T.Chief) + " applies these at the next check-in</span></div>";
+    if (!p.length) return h + '<div class="card muted">No requests are waiting.</div></section>';
+    h += '<div class="card"><div class="stack">' + p.map(function (r) {
+      var a = findA(r.architectId);
+      return '<div style="border-bottom:1px solid var(--line);padding-bottom:10px"><div class="row"><strong>' + esc(a ? a.name : r.architectId) + "</strong> " + '<span class="small muted">' + tm(r.requestedAt) + "</span></div>" +
+        "<div>" + esc(reqText(r)) + "</div>" + (r.result ? '<div class="small muted">' + esc(r.result) + "</div>" : "") + "</div>";
+    }).join("") + "</div></div>";
+    return h + "</section>";
+  }
+
+  /* ----- ARCHITECT TAB ----- */
+  function getDraft(a) {
+    var d = S.draft[a.id];
+    if (!d) {
+      var p = presetByCron(a.cron);
+      d = S.draft[a.id] = { preset: p ? p.id : "custom", cron: a.cron || "", error: "" };
+    }
+    return d;
+  }
+  function confirmPanel(type, a) {
+    var yes, no, text;
+    if (type === "deactivate") { text = "Pause " + a.name + "? Its tick stops firing; the session stays."; yes = "Yes, pause"; no = "Keep running"; }
+    else { text = "Resume " + a.name + " on its last cadence " + a.cron + "?"; yes = "Yes, resume"; no = "Not now"; }
+    var busy = S.busy["a:" + a.id] ? " disabled" : "";
+    return '<div class="panel' + (type === "deactivate" ? "" : " ok") + '" role="group" aria-label="Confirm"><p><strong>' + esc(text) + '</strong></p><div class="row">' +
+      '<button class="btn ' + (type === "deactivate" ? "danger" : "primary") + '" id="confirm-yes-' + esc(a.id) + '" data-action="confirm-yes" data-type="' + type + '" data-id="' + esc(a.id) + '"' + busy + ">" + esc(yes) + "</button>" +
+      '<button class="btn" id="confirm-no-' + esc(a.id) + '" data-action="confirm-no" data-id="' + esc(a.id) + '"' + busy + ">" + esc(no) + "</button></div></div>";
+  }
+  function archView(id) {
+    var a = findA(id);
+    if (!a) return '<div class="card empty"><h2>No such lane</h2><p class="muted">This lane is not on the board. <a href="#home">Back to Home</a></p></div>';
+    var s = sessionOf(a), t = trigOf(a), inactive = a.status === "inactive";
+    var h = "";
+    // header
+    h += '<section><div class="card stack"><div class="row" style="justify-content:space-between"><h2>' + esc(a.name) + '</h2><span class="pill ' + esc(a.status) + '">' + esc(a.status) + "</span></div>" +
+      '<p class="muted">' + esc([a.version, a.model].filter(Boolean).join(", ")) + (a.lane ? " | " : "") + esc(a.lane || "") + "</p>";
+    if (s) {
+      var c = s.data.ccr, st = stateOf(c), em = c.external_metadata || {}, cost = em.usage && em.usage.cost_usd, pts = em.post_turn_summary;
+      h += '<div class="row"><span class="pill ' + st[0] + '">' + esc(st[1]) + '</span><span class="tag live" title="' + esc(absT(new Date(s.at).toISOString())) + '">live, ' + esc(rel(new Date(s.at).toISOString())) + "</span></div>" +
+        '<dl class="facts">' +
+        (ctxText(c) ? '<div class="fact"><dt>Context used</dt><dd>' + ctxText(c) + "</dd></div>" : "") +
+        (cost != null ? '<div class="fact"><dt>Session cost</dt><dd class="num">$' + esc(Number(cost).toFixed(2)) + "</dd></div>" : "") +
+        (c.updated_at ? '<div class="fact"><dt>Last activity</dt><dd>' + tm(c.updated_at) + "</dd></div>" : "") +
+        (pts && pts.recent_action ? '<div class="fact" style="grid-column:1/-1"><dt>Recent action</dt><dd>' + esc(pts.recent_action) + (pts.status_detail ? '<br><span class="muted small">' + esc(pts.status_detail) + "</span>" : "") + "</dd></div>" : "") +
+        "</dl>";
+    } else {
+      h += '<div class="row"><span class="tag">from the record</span><span class="small muted">Last run ' + tm(a.lastRunAt) + "</span></div>";
+    }
+    h += (a.sessionId ? errNote("s:" + a.sessionId, "Session") : "") +
+      '<div class="lk-row">' + (a.sessionUrl ? link(a.sessionUrl, "Open live session", "btn primary") : "") + (a.whiteboardUrl ? link(a.whiteboardUrl, "Whiteboard", "btn") : "") +
+      (a.repoUrl ? link(a.repoUrl, "Repo", "btn") : "") + (a.logUrl ? link(a.logUrl, "Log", "btn") : "") + (a.liveUrl ? link(a.liveUrl, "Live site", "btn") : "") + "</div>";
+    if (inactive) h += '<p class="small"><a href="#inactive">Back to Inactive</a></p>';
+    h += "</div></section>";
+
+    // whiteboard
+    h += '<section><div class="sec-head"><h3>Whiteboard</h3></div><div class="card">' +
+      (a.whiteboardUrl ? "<p>" + esc(a.whiteboardTitle || "Whiteboard") + '</p><div class="row" style="margin-top:8px">' + link(a.whiteboardUrl, "Open the whiteboard", "btn") + "</div>" : '<p class="muted">No whiteboard yet. ' + esc(T.Chief) + " can ask the lane to make one.</p>") + "</div></section>";
+
+    // cadence
+    h += '<section><div class="sec-head"><h3>Cadence</h3></div><div class="card stack">';
+    var last = t && t.data.trigger.last_run;
+    h += '<dl class="facts"><div class="fact"><dt>Cadence</dt><dd>' + esc(a.cadence || "Not set") + "</dd></div>" +
+      '<div class="fact"><dt>Cron (UTC)</dt><dd>' + (a.cron ? "<code>" + esc(a.cron) + "</code>" : '<span class="muted">none on record</span>') + "</dd></div>" +
+      '<div class="fact"><dt>Next run</dt><dd>' + nextRunHtml(a) + "</dd></div>" +
+      '<div class="fact"><dt>Last run</dt><dd>' + esc(a.lastRun || "Nothing recorded") + (a.lastRunAt ? '<br><span class="small muted">' + tm(a.lastRunAt) + "</span>" : "") +
+      (last && last.fired_at ? '<br><span class="small muted">Tick fired ' + tm(last.fired_at) + (last.status ? ", " + esc(last.status) : "") + "</span>" : "") + "</dd></div></dl>";
+    if (a.tickId) h += errNote("t:" + a.tickId, "Tick");
+    var pend = S.reqs.filter(function (r) { return r.status === "pending" && r.architectId === a.id; });
+    if (pend.length) h += '<div class="banner warn">' + pend.length + " request" + (pend.length > 1 ? "s are" : " is") + " queued for " + esc(T.chiefPoss) + " next check-in: " + esc(pend.map(reqText).join("; ")) + ".</div>";
+    if (S.notice[a.id]) h += '<div class="banner">' + esc(S.notice[a.id]) + "</div>";
+
+    if (S.readonly) {
+      h += '<p class="small muted">View only.</p>';
+    } else if (!a.tickId) {
+      h += '<div><button class="btn" disabled>No tick on record; ask ' + esc(T.chief) + "</button></div>";
+    } else {
+      var d = getDraft(a), busy = S.busy["a:" + a.id] ? " disabled" : "";
+      h += '<div class="stack"><h4>Change cadence</h4><div class="form-grid">' +
+        '<div class="field"><label for="cad-preset-' + esc(a.id) + '">Preset</label><select id="cad-preset-' + esc(a.id) + '" data-draft="preset" data-aid="' + esc(a.id) + '"' + busy + ">" +
+        PRESETS.map(function (p) { return '<option value="' + p.id + '"' + (p.id === d.preset ? " selected" : "") + ">" + esc(p.label) + "</option>"; }).join("") + "</select></div>" +
+        '<div class="field"><label for="cad-cron-' + esc(a.id) + '">Cron, five fields, UTC</label><input type="text" class="mono" id="cad-cron-' + esc(a.id) + '" data-draft="cron" data-aid="' + esc(a.id) + '" value="' + esc(d.cron) + '" autocomplete="off" spellcheck="false"' + busy + "></div></div>" +
+        (d.error ? '<div class="err-text" role="alert">' + esc(d.error) + "</div>" : "") +
+        '<div class="row"><button class="btn primary" id="cad-apply-' + esc(a.id) + '" data-action="cadence" data-id="' + esc(a.id) + '"' + busy + ">Apply cadence</button>" +
+        (inactive ? '<span class="small muted">Applying also resumes this lane.</span>' : "") + "</div></div>";
+      if (!inactive) {
+        h += '<div class="stack" style="border-top:1px solid var(--line);padding-top:14px"><h4>Pause this lane</h4>';
+        if (S.confirm && S.confirm.type === "deactivate" && S.confirm.id === a.id) h += confirmPanel("deactivate", a);
+        else h += '<div class="row"><button class="btn danger" id="deact-' + esc(a.id) + '" data-action="confirm-open" data-type="deactivate" data-id="' + esc(a.id) + '"' + busy + ">Pause lane</button></div>";
+        h += "</div>";
+      }
+    }
+    h += "</div></section>";
+
+    // notes
+    h += '<section><div class="sec-head"><h3>Notes</h3></div><div class="card stack">' +
+      (a.notes ? "<p>" + esc(a.notes) + "</p>" : '<p class="muted">No notes.</p>') +
+      (a.merges ? '<div><div class="small muted">Merge rule</div><p>' + esc(a.merges) + "</p></div>" : "") + "</div></section>";
+    return h;
+  }
+
+  /* ----- INACTIVE TAB ----- */
+  function inactiveView() {
+    var list = inactiveA();
+    var h = '<section><div class="sec-head"><h2>Inactive lanes</h2><span class="small muted">' + list.length + " paused or finished</span></div>";
+    if (!list.length) return h + '<div class="card muted">Every lane is active.</div></section>';
+    h += '<div class="grid">' + list.map(function (a) {
+      var busy = S.busy["a:" + a.id] ? " disabled" : "";
+      var c = '<article class="card stack"><div class="row" style="justify-content:space-between"><h3>' + esc(a.name) + '</h3><span class="pill inactive">inactive</span></div>' +
+        '<p class="small muted">' + esc([a.version, a.model].filter(Boolean).join(", ")) + "</p>" +
+        (a.lane ? "<p>" + esc(a.lane) + "</p>" : "") +
+        '<dl class="facts" style="grid-template-columns:1fr"><div class="fact"><dt>Last run</dt><dd>' + esc(a.lastRun || "Nothing recorded") + (a.lastRunAt ? ' <span class="small muted">' + tm(a.lastRunAt) + "</span>" : "") + "</dd></div>" +
+        '<div class="fact"><dt>Stored cron (UTC)</dt><dd>' + (a.cron ? "<code>" + esc(a.cron) + "</code>" : '<span class="muted">none on record</span>') + "</dd></div>" +
+        '<div class="fact"><dt>Status note</dt><dd>' + esc(a.cadence || "") + "</dd></div></dl>" +
+        '<div class="lk-row">' + linksHtml(a, false) + "</div>";
+      if (S.readonly) c += '<p class="small muted">View only.</p>';
+      else if (!a.tickId || !a.cron) c += '<div><button class="btn" disabled>No tick on record; ask ' + esc(T.chief) + "</button></div>";
+      else if (S.confirm && S.confirm.type === "activate" && S.confirm.id === a.id) c += confirmPanel("activate", a);
+      else c += '<div><button class="btn primary" id="act-' + esc(a.id) + '" data-action="confirm-open" data-type="activate" data-id="' + esc(a.id) + '"' + busy + ">Resume lane</button></div>";
+      c += '<p class="small"><a href="#a-' + esc(a.id) + '">Open its tab</a></p></article>';
+      return c;
+    }).join("") + "</div></section>";
+    return h;
+  }
+
+  /* ---------- live watches ---------- */
+  function wantedWatches() {
+    var w = {};
+    if (!hasMcp() || !S.booted) return w;
+    function add(a) {
+      if (a.sessionId) w["s:" + a.sessionId] = ["get_session", { session_id: a.sessionId }];
+      if (a.tickId) w["t:" + a.tickId] = ["get_trigger", { trigger_id: a.tickId }];
+    }
+    var m = /^a-(.+)$/.exec(S.route);
+    if (S.route === "home") activeA().forEach(add);
+    else if (m) { var a = findA(m[1]); if (a) add(a); }
+    return w;
+  }
+  function startWatch(key, tool, input) {
+    var un;
+    try {
+      un = S.mcp.watchTool(SERVER, tool, input, function (ev) {
+        if (ev.type === "data") {
+          S.live[key] = { data: payload(ev.result), at: (ev.result.cache && ev.result.cache.storedAt) || Date.now(), err: null };
+        } else {
+          var e = ev.error || {}, cur = S.live[key] || { data: null, at: 0 };
+          if (DENIED[e.code]) S.live[key] = { data: null, at: 0, err: e };
+          else S.live[key] = { data: cur.data, at: cur.at, err: e };
+        }
+        render();
+      }, { cache: { staleTime: 120000, gcTime: 900000 }, refetchInterval: 120000 });
+    } catch (e) { return; }
+    S.watches[key] = un;
+    S.watchInputs[key] = [tool, input];
+  }
+  function stopWatch(key) {
+    var un = S.watches[key];
+    if (un) { try { un(); } catch (e) { /* ignore */ } }
+    delete S.watches[key];
+  }
+  function syncWatches() {
+    var w = wantedWatches(), sig = Object.keys(w).sort().join("|");
+    if (sig === S.watchSig) return;
+    S.watchSig = sig;
+    Object.keys(S.watches).forEach(function (k) { if (!w[k]) stopWatch(k); });
+    Object.keys(w).forEach(function (k) { if (!S.watches[k]) startWatch(k, w[k][0], w[k][1]); });
+  }
+  function retryLive(key) {
+    var inp = S.watchInputs[key];
+    if (!inp || !S.mcp) return;
+    stopWatch(key);
+    var go = function () { startWatch(key, inp[0], inp[1]); };
+    S.mcp.invalidate(SERVER, inp[0], inp[1]).then(go, go);
+  }
+
+  /* ---------- actions ---------- */
+  async function setIssue(id, done) {
+    var key = "i:" + id;
+    if (S.busy[key] || !S.db) return;
+    S.busy[key] = true; render();
+    try {
+      await S.db.doc("issues/" + id).update(done ? { status: "done", doneAt: iso() } : { status: "open", doneAt: null });
+      toast(done ? "Marked done." : "Back on the list.");
+    } catch (e) { toast(dbMsg(e), "err"); }
+    S.busy[key] = false; render();
+  }
+
+  async function trigCall(a, extra) {
+    if (!a.tickId) return { ok: false, unavailable: true, message: "No tick is on record for this lane." };
+    if (!hasMcp()) return { ok: false, unavailable: true, message: "Live control is not available in this view." };
+    try {
+      var res = await S.mcp.callTool(SERVER, "update_trigger", Object.assign({ trigger_id: a.tickId }, extra));
+      var p = payload(res);
+      return { ok: true, trigger: p && p.trigger ? p.trigger : null };
+    } catch (e) {
+      var c = e && e.code;
+      return { ok: false, code: c, unavailable: !!DENIED[c], message: (e && e.message) || "The call failed." };
+    }
+  }
+  function mkReq(type, a, value, note, status, result) {
+    var o = { id: type + "-" + a.id + "-" + Date.now(), architectId: a.id, type: type, value: value || "", note: note || "", requestedAt: iso(), status: status, result: result || "" };
+    if (status === "applied") o.appliedAt = iso();
+    return o;
+  }
+
+  async function runAction(type, id) {
+    var a = findA(id), key = "a:" + id;
+    if (!a || S.busy[key] || !S.db) return;
+    var cron, extra, upd, note, value;
+    if (type === "cadence") {
+      var d = getDraft(a);
+      cron = normCron(d.cron);
+      var err = cronErr(cron);
+      if (err) { d.error = err; render(); return; }
+      d.error = "";
+      extra = { cron_expression: cron, enabled: true };
+      upd = { status: "scheduled", cron: cron, cadence: cadenceFor(cron) };
+      note = "Change cadence to " + upd.cadence; value = cron;
+    } else if (type === "deactivate") {
+      extra = { enabled: false };
+      upd = { status: "inactive", cadence: "Paused " + today() + " by " + T.owner + " from the Desk" };
+      note = "Pause " + a.name; value = "";
+    } else {
+      cron = a.cron;
+      extra = { enabled: true, cron_expression: cron };
+      upd = { status: "scheduled", cron: cron, cadence: cadenceFor(cron) };
+      note = "Resume " + a.name + " on " + cron; value = cron;
+    }
+    S.busy[key] = true; S.notice[id] = ""; render();
+    var out = await trigCall(a, extra);
+    var wroteReq = false, wroteDoc = false, saveErr = null;
+    if (out.ok) {
+      var tr = out.trigger;
+      var result = tr ? "Tick now reads: " + (tr.cron_expression || "no cron") + ", " + (tr.enabled === false ? "paused" : "enabled") + (tr.next_run_at ? ", next run " + tr.next_run_at : "") + "." : "The tick call succeeded.";
+      try { await S.db.doc("architects/" + id).update(Object.assign({}, upd, { updatedAt: iso() })); wroteDoc = true; } catch (e1) { saveErr = e1; }
+      var rq1 = mkReq(type, a, value, note, "applied", result);
+      try { await S.db.collection("requests").doc(rq1.id).set(rq1); wroteReq = true; } catch (e2) { saveErr = saveErr || e2; }
+      if (tr) S.live["t:" + a.tickId] = { data: { trigger: tr }, at: Date.now(), err: null };
+      if (hasMcp()) { S.mcp.invalidate(SERVER, "get_trigger", { trigger_id: a.tickId }).catch(function () { /* ignore */ }); }
+      var verb = type === "cadence" ? "Cadence applied to " + a.name + ": " + upd.cadence + "." : type === "deactivate" ? a.name + " is paused." : a.name + " is running again.";
+      if (wroteDoc && wroteReq) toast(verb);
+      else toast(verb + " The tick changed, but the board record did not save: " + dbMsg(saveErr), "err");
+    } else {
+      var reason = out.unavailable ? out.message : "The tick call failed (" + (out.code || "error") + "): " + out.message + " The tick may or may not have changed; " + T.chief + " will check.";
+      try { var rq2 = mkReq(type, a, value, note, "pending", reason); await S.db.collection("requests").doc(rq2.id).set(rq2); wroteReq = true; } catch (e3) { saveErr = e3; }
+      if (wroteReq) {
+        S.notice[id] = "Queued for " + T.chiefPoss + " next check-in. " + (out.unavailable ? "" : "The live call failed: " + out.message);
+        toast("Queued for " + T.chiefPoss + " next check-in.");
+      } else toast("Could not queue the request: " + dbMsg(saveErr), "err");
+    }
+    S.busy[key] = false;
+    S.confirm = null;
+    render();
+  }
+
+  /* ---------- events ---------- */
+  document.addEventListener("click", function (ev) {
+    var el = ev.target.closest ? ev.target.closest("[data-action]") : null;
+    if (!el || el.disabled) return;
+    var act = el.getAttribute("data-action"), id = el.getAttribute("data-id"), type = el.getAttribute("data-type");
+    if (act === "issue-done") setIssue(id, true);
+    else if (act === "issue-undo") setIssue(id, false);
+    else if (act === "cadence") runAction("cadence", id);
+    else if (act === "confirm-open") { S.confirm = { type: type, id: id }; S.focus = "confirm-no-" + id; render(); }
+    else if (act === "confirm-no") { S.confirm = null; var c0 = findA(id); S.focus = c0 && c0.status === "inactive" ? "act-" + id : "deact-" + id; render(); }
+    else if (act === "confirm-yes") runAction(type, id);
+    else if (act === "retry-live") retryLive(el.getAttribute("data-key"));
+  });
+  document.addEventListener("input", function (ev) {
+    var el = ev.target;
+    if (!el || el.getAttribute("data-draft") !== "cron") return;
+    var a = findA(el.getAttribute("data-aid")); if (!a) return;
+    var d = getDraft(a);
+    d.cron = el.value; d.error = "";
+    var p = presetByCron(normCron(el.value));
+    d.preset = p ? p.id : "custom";
+    var sel = document.getElementById("cad-preset-" + a.id);
+    if (sel) sel.value = d.preset;
+  });
+  document.addEventListener("change", function (ev) {
+    var el = ev.target;
+    if (!el || el.getAttribute("data-draft") !== "preset") return;
+    var a = findA(el.getAttribute("data-aid")); if (!a) return;
+    var d = getDraft(a), p = null;
+    for (var i = 0; i < PRESETS.length; i++) if (PRESETS[i].id === el.value) p = PRESETS[i];
+    d.preset = el.value; d.error = "";
+    if (p && p.cron) d.cron = p.cron;
+    var inp = document.getElementById("cad-cron-" + a.id);
+    if (inp) inp.value = d.cron;
+    if (el.value === "custom" && inp) inp.focus();
+  });
+  document.addEventListener("toggle", function (ev) {
+    if (ev.target && ev.target.id === "done-details") S.doneOpen = ev.target.open;
+  }, true);
+
+  /* ---------- routing ---------- */
+  function readRoute() {
+    var h = (location.hash || "").replace(/^#/, "");
+    if (h === "home" || h === "inactive" || /^a-.+/.test(h)) return h;
+    return "";
+  }
+  function applyRoute(first) {
+    var r = readRoute();
+    if (!r && first) {
+      try { r = localStorage.getItem(LS_KEY) || ""; } catch (e) { r = ""; }
+      if (r && !(r === "home" || r === "inactive" || /^a-.+/.test(r))) r = "";
+      if (r && r !== "home") { try { history.replaceState(null, "", "#" + r); } catch (e2) { /* ignore */ } }
+    }
+    S.route = r || "home";
+    S.confirm = null;
+    try { localStorage.setItem(LS_KEY, S.route); } catch (e3) { /* ignore */ }
+    render();
+    if (!first) {
+      window.scrollTo(0, 0);
+      setTimeout(function () {
+        var cur = document.querySelector('.tab[aria-current="page"]');
+        if (cur && cur.scrollIntoView) { try { cur.scrollIntoView({ inline: "nearest", block: "nearest" }); } catch (e4) { /* ignore */ } }
+      }, 40);
+    }
+  }
+  window.addEventListener("hashchange", function () { applyRoute(false); });
+
+  /* ---------- boot ---------- */
+  function sub(name, ref, apply) {
+    var timer = setTimeout(function () { S.slow[name] = true; render(); }, 10000);
+    function clear() { clearTimeout(timer); S.slow[name] = false; }
+    try {
+      ref.onSnapshot(function (snap) {
+        apply(snap);
+        S.got[name] = true;
+        if (!snap.metadata || !snap.metadata.fromCache) clear();
+        render();
+      }, function (e) { clear(); S.dberr = e || { code: "error" }; S.got[name] = true; render(); });
+    } catch (e) { clear(); S.dberr = { code: "invalid_argument" }; S.got[name] = true; render(); }
+  }
+  function docs(snap) { return snap.docs.map(function (d) { var o = d.data() || {}; if (o.id == null) o.id = d.id; return o; }); }
+
+  async function useCap(name) {
+    try {
+      if (!window.claude || typeof window.claude.use !== "function") return null;
+      return await window.claude.use(name);
+    } catch (e) { return null; }
+  }
+
+  async function boot() {
+    var caps = await Promise.all([useCap("db"), useCap("user"), useCap("mcp")]);
+    S.db = caps[0]; S.user = caps[1]; S.mcp = caps[2];
+    if (S.user) {
+      try {
+        var own = await S.user.isOwner(), ed = await S.user.canEdit();
+        S.role = own ? "Owner" : ed ? "Admin" : "View only";
+        S.readonly = !ed && !own;
+      } catch (e) { /* leave controls on; a refused write decides */ }
+    }
+    S.booted = true;
+    if (S.db) {
+      sub("arch", S.db.collection("architects"), function (snap) { S.arch = docs(snap).sort(byOrder); });
+      sub("issues", S.db.collection("issues"), function (snap) { S.issues = docs(snap).sort(byOrder); });
+      sub("reqs", S.db.collection("requests"), function (snap) { S.reqs = docs(snap); });
+      sub("meta", S.db.doc("meta/board"), function (snap) { S.meta = snap.exists ? snap.data() : null; });
+    }
+    render();
+  }
+
+  function start() {
+    $("#brand").textContent = T.brand;
+    applyRoute(true);
+    render();
+    setTimeout(boot, 0);
+    setInterval(function () { render(); }, 30000);
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start);
+  else start();
+})();
+</script>
