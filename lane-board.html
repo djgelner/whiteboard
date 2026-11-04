@@ -1,0 +1,387 @@
+<title>Lane Whiteboard</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Newsreader:opsz,wght@6..72,500;6..72,600&display=swap">
+<style>
+:root {
+  --bg: #f1f0eb;
+  --surface: #fbfaf7;
+  --surface-2: #e9e7df;
+  --fg: #1d2127;
+  --fg-muted: #5b616a;
+  --line: #d8d5ca;
+  --accent: #2c5fb3;
+  --accent-fg: #ffffff;
+  --accent-soft: #dfe8f6;
+  --ok: #1f7a4d;
+  --ok-soft: #dcefe3;
+  --warn: #8f5500;
+  --warn-soft: #f6e7c8;
+  --danger: #b3322a;
+  --danger-soft: #f6dcd8;
+  --info: #4b5b70;
+  --info-soft: #e1e6ed;
+  --busy: #5b43a8;
+  --busy-soft: #e8e2f6;
+  --shadow: 0 1px 0 rgba(29, 33, 39, 0.04), 0 8px 24px -16px rgba(29, 33, 39, 0.25);
+  --display: "Newsreader", "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  --body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111418;
+    --surface: #181c21;
+    --surface-2: #20252b;
+    --fg: #e4e6e8;
+    --fg-muted: #9aa2ab;
+    --line: #2b3138;
+    --accent: #7ba6ec;
+    --accent-fg: #0d1420;
+    --accent-soft: #1c2a44;
+    --ok: #5fc68f;
+    --ok-soft: #14301f;
+    --warn: #e2b04d;
+    --warn-soft: #3a2d10;
+    --danger: #ef8a80;
+    --danger-soft: #3b1a17;
+    --info: #a3b3c8;
+    --info-soft: #222b36;
+    --busy: #b7a1f2;
+    --busy-soft: #2a2145;
+    --shadow: 0 1px 0 rgba(0, 0, 0, 0.3), 0 8px 24px -16px rgba(0, 0, 0, 0.7);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111418;
+  --surface: #181c21;
+  --surface-2: #20252b;
+  --fg: #e4e6e8;
+  --fg-muted: #9aa2ab;
+  --line: #2b3138;
+  --accent: #7ba6ec;
+  --accent-fg: #0d1420;
+  --accent-soft: #1c2a44;
+  --ok: #5fc68f;
+  --ok-soft: #14301f;
+  --warn: #e2b04d;
+  --warn-soft: #3a2d10;
+  --danger: #ef8a80;
+  --danger-soft: #3b1a17;
+  --info: #a3b3c8;
+  --info-soft: #222b36;
+  --busy: #b7a1f2;
+  --busy-soft: #2a2145;
+  --shadow: 0 1px 0 rgba(0, 0, 0, 0.3), 0 8px 24px -16px rgba(0, 0, 0, 0.7);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 15px; line-height: 1.5; font-variant-numeric: tabular-nums; }
+a { color: var(--accent); text-underline-offset: 2px; }
+h1, h2, h3, h4 { font-family: var(--display); font-weight: 600; line-height: 1.2; margin: 0; letter-spacing: 0.005em; }
+h1 { font-size: 28px; overflow-wrap: anywhere; }
+h2 { font-size: 22px; }
+h3 { font-size: 17px; }
+p { margin: 0; }
+.muted { color: var(--fg-muted); }
+.small { font-size: 13px; }
+[hidden] { display: none !important; }
+:where(a, button, select, input, summary, textarea):focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+.page { --gl: max(16px, env(safe-area-inset-left, 0px)); --gr: max(16px, env(safe-area-inset-right, 0px)); max-width: 760px; margin: 0 auto; padding-left: var(--gl); padding-right: var(--gr); padding-block: 22px 64px; }
+.masthead { display: grid; gap: 8px; padding-bottom: 18px; border-bottom: 1px solid var(--line); margin-bottom: 24px; }
+.sub { color: var(--fg-muted); font-size: 14px; }
+.hlinks { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 14px; }
+main { display: grid; gap: 32px; min-width: 0; }
+section { min-width: 0; }
+.sec-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 12px; margin-bottom: 12px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px; box-shadow: var(--shadow); min-width: 0; }
+.stack { display: grid; gap: 10px; min-width: 0; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.row > * { min-width: 0; }
+.btn { font: inherit; font-weight: 500; font-size: 14px; min-height: 40px; padding: 8px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--fg); cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
+.btn:hover:not(:disabled) { background: var(--surface-2); }
+.btn:disabled { opacity: 0.55; cursor: not-allowed; }
+.btn.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+.btn.primary:hover:not(:disabled) { background: var(--accent); filter: brightness(1.08); }
+.btn.outline { border-color: var(--accent); color: var(--accent); background: transparent; }
+.btn.outline:hover:not(:disabled) { background: var(--accent-soft); }
+.btn.text { border-color: transparent; background: transparent; color: var(--fg-muted); text-decoration: underline; text-underline-offset: 2px; }
+.linkbtn { font: inherit; font-size: 13px; background: none; border: 0; padding: 4px 2px; min-height: 32px; color: var(--accent); text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+.pill { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; padding: 2px 10px; border-radius: 999px; white-space: nowrap; background: var(--surface-2); color: var(--fg-muted); }
+.pill::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.pill.accepted, .pill.done { background: var(--ok-soft); color: var(--ok); }
+.pill.custom { background: var(--info-soft); color: var(--info); }
+.item { border: 1px solid var(--line); border-left: 4px solid var(--info); border-radius: 10px; padding: 14px; background: var(--surface); display: grid; gap: 8px; min-width: 0; }
+.item.k-decision { border-left-color: var(--accent); }
+.item.k-action { border-left-color: var(--warn); }
+.item.k-post { border-left-color: var(--busy); }
+.item.k-info { border-left-color: var(--info); }
+.item.decided { border-left-color: var(--line); }
+.item p, .item h3 { overflow-wrap: anywhere; }
+.body { white-space: pre-wrap; }
+.rec { background: var(--surface-2); border-radius: 8px; padding: 8px 10px; font-size: 14px; overflow-wrap: anywhere; }
+.note-box { background: var(--info-soft); border-radius: 8px; padding: 8px 10px; font-size: 14px; overflow-wrap: anywhere; }
+.kind-head { font-family: var(--display); font-size: 17px; margin: 16px 0 8px; }
+.kind-head:first-child { margin-top: 0; }
+.chip { font-size: 12px; background: var(--accent-soft); color: var(--accent); border-radius: 6px; padding: 2px 8px; font-weight: 500; }
+.glist { display: grid; gap: 0; }
+.lrow { padding: 10px 0; border-bottom: 1px solid var(--line); display: grid; gap: 2px; min-width: 0; }
+.lrow:last-child { border-bottom: 0; }
+.lrow a { font-weight: 600; overflow-wrap: anywhere; }
+.lrow .note { font-size: 13px; color: var(--fg-muted); overflow-wrap: anywhere; }
+.field { display: grid; gap: 4px; min-width: 0; }
+.field label { font-size: 13px; font-weight: 500; }
+input[type="text"], input[type="url"], textarea { font: inherit; color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; min-height: 40px; width: 100%; min-width: 0; }
+textarea { resize: vertical; min-height: 110px; line-height: 1.45; }
+.form-grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); }
+.err-text { color: var(--danger); font-size: 13px; }
+details > summary { cursor: pointer; font-weight: 500; padding: 6px 0; }
+.empty { padding: 24px 20px; display: grid; gap: 8px; }
+.banner { border-radius: 10px; padding: 10px 14px; font-size: 14px; background: var(--danger-soft); color: var(--danger); }
+.dlg-back { position: fixed; inset: 0; z-index: 60; background: rgba(10, 12, 16, 0.55); display: grid; place-items: center; padding: 16px; }
+.dlg { width: min(520px, 100%); max-height: 100%; overflow: auto; background: var(--surface); color: var(--fg); border: 1px solid var(--line); border-radius: 14px; padding: 20px; box-shadow: var(--shadow); display: grid; gap: 12px; }
+#toasts { position: fixed; z-index: 50; left: 0; right: 0; bottom: max(16px, env(safe-area-inset-bottom, 0px)); display: grid; gap: 8px; justify-items: center; padding: 0 16px; pointer-events: none; }
+.toast { pointer-events: auto; max-width: 560px; background: var(--fg); color: var(--bg); border-radius: 10px; padding: 10px 14px; font-size: 14px; box-shadow: var(--shadow); animation: rise 0.18s ease-out; }
+.toast.err { background: var(--danger); color: #fff; }
+@keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+@media (max-width: 520px) { h1 { font-size: 24px; } .card { padding: 14px; } }
+</style>
+
+<div class="page">
+  <div class="masthead">
+    <h1 id="lane-name">Lane Whiteboard</h1>
+    <div class="sub" id="lane-sub"></div>
+    <nav class="hlinks" id="lane-links" aria-label="Lane links"></nav>
+    <div class="sub" id="lane-updated"></div>
+  </div>
+  <main>
+    <div id="state" class="card empty">
+      <h2>Waiting for the board</h2>
+      <p class="muted">When the lane's session writes to this board, the lane name, the decisions waiting on you, the links and the files will appear here.</p>
+    </div>
+    <section id="sec-wait" hidden aria-labelledby="h-wait">
+      <div class="sec-head"><h2 id="h-wait">Waiting on the owner</h2><span class="small muted" id="wait-count"></span></div>
+      <div id="wait-body"></div>
+      <details id="decided" hidden><summary id="decided-sum">Decided</summary><div class="stack" id="decided-body"></div></details>
+    </section>
+    <section id="sec-links" hidden aria-labelledby="h-links">
+      <div class="sec-head"><h2 id="h-links">Links</h2></div>
+      <div id="links-body" class="stack"></div>
+    </section>
+    <section id="sec-files" hidden aria-labelledby="h-files">
+      <div class="sec-head"><h2 id="h-files">Files</h2></div>
+      <div id="files-body" class="stack"></div>
+    </section>
+    <section id="sec-add" hidden aria-labelledby="h-add">
+      <div class="sec-head"><h2 id="h-add">Add link</h2><span class="small muted">Owner only</span></div>
+      <form class="card stack" id="add-form" novalidate>
+        <div class="form-grid">
+          <div class="field"><label for="add-label">Label</label><input type="text" id="add-label" autocomplete="off"></div>
+          <div class="field"><label for="add-url">Address</label><input type="url" id="add-url" placeholder="https://" autocomplete="off"></div>
+          <div class="field"><label for="add-group">Group</label><input type="text" id="add-group" autocomplete="off"></div>
+          <div class="field"><label for="add-note">Note</label><input type="text" id="add-note" autocomplete="off"></div>
+        </div>
+        <div class="err-text" id="add-err" hidden></div>
+        <div class="row"><button type="submit" class="btn primary" id="add-submit">Add link</button></div>
+      </form>
+    </section>
+  </main>
+</div>
+
+<div class="dlg-back" id="dlg" hidden>
+  <div class="dlg" role="dialog" aria-modal="true" aria-labelledby="dlg-title">
+    <h3 id="dlg-title">Something else</h3>
+    <p class="small muted" id="dlg-item"></p>
+    <div class="field"><label for="dlg-text">What should happen instead, in your words</label><textarea id="dlg-text"></textarea></div>
+    <div class="err-text" id="dlg-err" hidden></div>
+    <div class="row"><button type="button" class="btn primary" id="dlg-send">Send</button><button type="button" class="btn text" id="dlg-cancel">Cancel</button></div>
+  </div>
+</div>
+<div id="toasts" aria-live="polite"></div>
+
+<script>
+(function () {
+  "use strict";
+  var S = { db: null, user: null, meta: null, items: [], links: [], files: [], got: {}, dberr: null, owner: false, dlgId: null };
+  function $(s) { return document.querySelector(s); }
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+  function safeUrl(u) { u = String(u || "").trim(); return /^https?:\/\//i.test(u) ? u : ""; }
+  function byOrder(a, b) { return (Number(a.order) || 0) - (Number(b.order) || 0); }
+  function rel(iso) {
+    var t = Date.parse(iso); if (isNaN(t)) return "";
+    var s = Math.round((Date.now() - t) / 1000);
+    if (s < 45) return "just now";
+    var m = Math.round(s / 60); if (m < 60) return m + " min ago";
+    var h = Math.round(m / 60); if (h < 24) return h + (h === 1 ? " hour ago" : " hours ago");
+    var d = Math.round(h / 24); if (d === 1) return "yesterday";
+    return d + " days ago";
+  }
+  function toast(msg, kind) {
+    var t = document.createElement("div"); t.className = "toast" + (kind === "err" ? " err" : ""); t.textContent = msg;
+    $("#toasts").appendChild(t); setTimeout(function () { if (t.parentNode) t.parentNode.removeChild(t); }, 4500);
+  }
+  function kindClass(k) {
+    if (k === "Decision") return "k-decision";
+    if (k === "Action") return "k-action";
+    if (k === "Info") return "k-info";
+    return "k-post";
+  }
+  function groupBy(list, key, fallback) {
+    var order = [], map = {};
+    list.forEach(function (x) { var g = x[key] || fallback; if (!map[g]) { map[g] = []; order.push(g); } map[g].push(x); });
+    return order.map(function (g) { return { name: g, list: map[g] }; });
+  }
+
+  function itemCard(it, decided) {
+    var h = '<article class="item ' + kindClass(it.kind) + (decided ? " decided" : "") + '" data-id="' + esc(it.id) + '">';
+    h += '<div class="row"><span class="chip">' + esc(it.kind || "Info") + "</span>";
+    if (decided) h += '<span class="pill ' + esc(it.status) + '">' + esc(it.status) + "</span>";
+    h += '</div><h3>' + esc(it.title) + "</h3>";
+    if (it.body) h += '<p class="body">' + esc(it.body) + "</p>";
+    var u = safeUrl(it.url);
+    if (u) h += '<p class="small"><a href="' + esc(u) + '" target="_blank" rel="noopener">Open the source</a></p>';
+    if (it.recommendation) h += '<div class="rec"><strong>Recommended:</strong> ' + esc(it.recommendation) + "</div>";
+    if (it.note) h += '<div class="note-box">' + esc(it.note) + "</div>";
+    if (decided) {
+      if (it.decidedAt) h += '<p class="small muted" title="' + esc(it.decidedAt) + '">Decided ' + esc(rel(it.decidedAt)) + "</p>";
+      h += '<div class="row"><button type="button" class="linkbtn" data-act="undo" data-id="' + esc(it.id) + '">Undo</button></div>';
+    } else {
+      h += '<div class="row"><button type="button" class="btn primary" data-act="accept" data-id="' + esc(it.id) + '">Accept recommendation</button>' +
+        '<button type="button" class="btn outline" data-act="else" data-id="' + esc(it.id) + '">Something else</button>' +
+        '<button type="button" class="btn text" data-act="decline" data-id="' + esc(it.id) + '">Decline</button></div>';
+    }
+    return h + "</article>";
+  }
+  function linkGroups(list, fallback) {
+    return groupBy(list.slice().sort(byOrder), "group", fallback).map(function (g) {
+      var h = '<div class="card"><h3>' + esc(g.name) + '</h3><div class="glist">';
+      g.list.forEach(function (l) {
+        var u = safeUrl(l.url);
+        h += '<div class="lrow">' + (u ? '<a href="' + esc(u) + '" target="_blank" rel="noopener">' + esc(l.label || u) + "</a>" : "<span>" + esc(l.label) + "</span>") +
+          (l.note ? '<span class="note">' + esc(l.note) + "</span>" : "") + "</div>";
+      });
+      return h + "</div></div>";
+    }).join("");
+  }
+
+  function render() {
+    var m = S.meta, open = S.items.filter(function (i) { return (i.status || "open") === "open"; }).sort(byOrder);
+    var decided = S.items.filter(function (i) { return (i.status || "open") !== "open"; }).sort(function (a, b) { return Date.parse(b.decidedAt || 0) - Date.parse(a.decidedAt || 0); });
+    var any = !!m || S.items.length || S.links.length || S.files.length;
+    var st = $("#state");
+    st.hidden = !!any;
+    if (S.dberr && !any) {
+      st.hidden = false;
+      st.innerHTML = '<h2>The board could not be read</h2><p class="muted">Reload the page. If it keeps failing, ask the lane\'s session to check the board.</p>';
+    } else if (!any && S.db && S.got.meta && S.got.items) {
+      st.innerHTML = '<h2>Nothing on the board yet</h2><p class="muted">The lane name, decisions waiting on you, links and files will appear here once the lane\'s session writes them.</p>';
+    }
+    $("#lane-name").textContent = (m && m.laneName) || "Lane Whiteboard";
+    var sub = m ? [m.architectName, m.version].filter(Boolean).join(" ") : "";
+    $("#lane-sub").textContent = sub;
+    var hl = [["Open the architect's live session", m && m.sessionUrl], ["Repo", m && m.repoUrl], ["Log", m && m.logUrl], ["Fable", m && m.fableSessionUrl]]
+      .filter(function (p) { return safeUrl(p[1]); })
+      .map(function (p) { return '<a href="' + esc(safeUrl(p[1])) + '" target="_blank" rel="noopener">' + esc(p[0]) + "</a>"; });
+    $("#lane-links").innerHTML = hl.join("");
+    var up = m && m.updatedAt ? "Board updated " + rel(m.updatedAt) : "";
+    var extra = [m && m.cadence ? "Runs " + m.cadence : "", m && m.note].filter(Boolean).join(". ");
+    var upEl = $("#lane-updated"); upEl.textContent = [up, extra].filter(Boolean).join(". "); upEl.title = (m && m.updatedAt) || "";
+
+    $("#sec-wait").hidden = !(open.length || decided.length);
+    $("#wait-count").textContent = open.length ? open.length + (open.length === 1 ? " open" : " open") : "";
+    $("#wait-body").innerHTML = open.length ? groupBy(open, "kind", "Info").map(function (g) {
+      return '<h3 class="kind-head">' + esc(g.name) + '</h3><div class="stack">' + g.list.map(function (i) { return itemCard(i, false); }).join("") + "</div>";
+    }).join("") : '<div class="card"><p class="muted">Nothing is waiting on you.</p></div>';
+    $("#decided").hidden = !decided.length;
+    $("#decided-sum").textContent = "Decided (" + decided.length + ")";
+    $("#decided-body").innerHTML = decided.map(function (i) { return itemCard(i, true); }).join("");
+    $("#sec-links").hidden = !S.links.length;
+    $("#links-body").innerHTML = linkGroups(S.links, "Links");
+    $("#sec-files").hidden = !S.files.length;
+    $("#files-body").innerHTML = linkGroups(S.files, "Files");
+    $("#sec-add").hidden = !(S.owner && S.db);
+  }
+
+  function find(id) { return S.items.filter(function (i) { return i.id === id; })[0]; }
+  async function decide(id, status, note) {
+    var it = find(id); if (!it || !S.db) { toast("The board is not connected. Reload and try again.", "err"); return false; }
+    var now = new Date().toISOString();
+    try {
+      await S.db.doc("items/" + id).update({ status: status, note: note || "", decidedAt: now, decidedBy: "owner" });
+      var did = "items-" + id + "-" + Date.now();
+      try { await S.db.doc("decisions/" + did).set({ id: did, collection: "items", docId: id, title: it.title || "", status: status, note: note || "", decidedAt: now, decidedBy: "owner", notified: false }); } catch (e2) { /* the item write stands */ }
+      return true;
+    } catch (e) { toast("The decision was not saved: " + ((e && e.message) || "write refused") + ". Only the owner can decide.", "err"); return false; }
+  }
+  async function undo(id) {
+    try { await S.db.doc("items/" + id).update({ status: "open", note: "", decidedAt: "", decidedBy: "" }); toast("Back in the open list."); }
+    catch (e) { toast("Undo was not saved. Try again.", "err"); }
+  }
+  function openDlg(id) {
+    var it = find(id); if (!it) return;
+    S.dlgId = id; $("#dlg-item").textContent = it.title || ""; $("#dlg-text").value = ""; $("#dlg-err").hidden = true;
+    $("#dlg").hidden = false; $("#dlg-text").focus();
+  }
+  function closeDlg() { $("#dlg").hidden = true; S.dlgId = null; }
+
+  document.addEventListener("click", async function (ev) {
+    var b = ev.target.closest && ev.target.closest("[data-act]"); if (!b) return;
+    var id = b.getAttribute("data-id"), act = b.getAttribute("data-act");
+    if (act === "accept") { if (await decide(id, "accepted", "")) toast("Accepted. The lane acts on it and marks it done."); }
+    else if (act === "decline") { if (await decide(id, "declined", "")) toast("Declined."); }
+    else if (act === "else") openDlg(id);
+    else if (act === "undo") undo(id);
+  });
+  $("#dlg-cancel").addEventListener("click", closeDlg);
+  $("#dlg").addEventListener("click", function (e) { if (e.target === $("#dlg")) closeDlg(); });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !$("#dlg").hidden) closeDlg(); });
+  $("#dlg-send").addEventListener("click", async function () {
+    var t = $("#dlg-text").value.trim();
+    if (!t) { var er = $("#dlg-err"); er.textContent = "Write what should happen instead, then send."; er.hidden = false; return; }
+    if (await decide(S.dlgId, "custom", t)) { closeDlg(); toast("Sent. The lane reads it at its next run."); }
+  });
+  $("#add-form").addEventListener("submit", async function (e) {
+    e.preventDefault();
+    var label = $("#add-label").value.trim(), url = safeUrl($("#add-url").value), er = $("#add-err");
+    if (!label || !url) { er.textContent = "Add a label and an address that starts with http:// or https://."; er.hidden = false; return; }
+    er.hidden = true;
+    var slug = label.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40) || "link";
+    var id = slug + "-" + Math.random().toString(36).slice(2, 6);
+    var maxo = S.links.reduce(function (a, l) { return Math.max(a, Number(l.order) || 0); }, 0);
+    try {
+      await S.db.doc("links/" + id).set({ id: id, group: $("#add-group").value.trim() || "Links", label: label, url: url, note: $("#add-note").value.trim(), order: maxo + 1 });
+      ["label", "url", "group", "note"].forEach(function (k) { $("#add-" + k).value = ""; });
+      toast("Link added.");
+    } catch (x) { toast("The link was not saved. Only the owner can add links.", "err"); }
+  });
+
+  function docs(snap) { return snap.docs.map(function (d) { var o = d.data() || {}; if (o.id == null) o.id = d.id; return o; }); }
+  function sub(name, ref, apply) {
+    try {
+      ref.onSnapshot(function (snap) { apply(snap); S.got[name] = true; render(); },
+        function (e) { S.dberr = e || { code: "error" }; S.got[name] = true; render(); });
+    } catch (e) { S.dberr = { code: "invalid_argument" }; S.got[name] = true; render(); }
+  }
+  async function useCap(name) {
+    try { if (!window.claude || typeof window.claude.use !== "function") return null; return await window.claude.use(name); } catch (e) { return null; }
+  }
+  async function boot() {
+    var caps = await Promise.all([useCap("db"), useCap("user")]);
+    S.db = caps[0]; S.user = caps[1];
+    if (S.user) { try { S.owner = !!(await S.user.isOwner()) || !!(await S.user.canEdit()); } catch (e) { /* form stays hidden */ } }
+    if (S.db) {
+      sub("meta", S.db.doc("meta/board"), function (s) { S.meta = s.exists ? s.data() : null; });
+      sub("items", S.db.collection("items"), function (s) { S.items = docs(s); });
+      sub("links", S.db.collection("links"), function (s) { S.links = docs(s); });
+      sub("files", S.db.collection("files"), function (s) { S.files = docs(s); });
+    }
+    render();
+  }
+  function start() { render(); setTimeout(boot, 0); setInterval(render, 30000); }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start); else start();
+})();
+</script>

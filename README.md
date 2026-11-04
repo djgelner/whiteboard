@@ -58,3 +58,7 @@ The live parts: session state and context use, the real next-run time, and the a
 ## License
 
 MIT. See [LICENSE](LICENSE).
+
+## Lane whiteboards
+
+Each architect can have its own board, `lane-board.html`: one column, driven entirely by its database (a `meta/board` document with the lane's name, session link, repo and log; `items` with the same Accept, Something else and Decline buttons; `links` and `files`). Publish it once per lane with the `db` and `user` capabilities, seed `meta/board`, and give the lane's scheduled prompt two lines: open the board first, and at the end of the run add anything the owner needs to it. The Chief of Staff's desk links to each lane board from that architect's tab.
