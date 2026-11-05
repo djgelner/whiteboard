@@ -271,7 +271,7 @@ details > summary { cursor: pointer; font-weight: 500; padding: 6px 0; }
       if (it.decidedAt) h += '<p class="small muted" title="' + esc(it.decidedAt) + '">Decided ' + esc(rel(it.decidedAt)) + "</p>";
       h += '<div class="row"><button type="button" class="linkbtn" data-act="undo" data-id="' + esc(it.id) + '">Undo</button></div>';
     } else {
-      h += '<div class="row"><button type="button" class="btn primary" data-act="accept" data-id="' + esc(it.id) + '">Accept recommendation</button>' +
+      h += '<div class="row"><button type="button" class="btn primary" data-act="accept" data-id="' + esc(it.id) + '">' + (it.prompt ? "It's done" : "Accept recommendation") + '</button>' +
         '<button type="button" class="btn outline" data-act="else" data-id="' + esc(it.id) + '">Something else</button>' +
         '<button type="button" class="btn text" data-act="decline" data-id="' + esc(it.id) + '">Decline</button></div>';
     }
@@ -352,7 +352,11 @@ details > summary { cursor: pointer; font-weight: 500; padding: 6px 0; }
   document.addEventListener("click", async function (ev) {
     var b = ev.target.closest && ev.target.closest("[data-act]"); if (!b) return;
     var id = b.getAttribute("data-id"), act = b.getAttribute("data-act");
-    if (act === "accept") { if (await decide(id, "accepted", "")) toast("Accepted. The lane acts on it and marks it done."); }
+    if (act === "accept") {
+      var itA = S.items.filter(function (x) { return x.id === id; })[0];
+      if (itA && itA.prompt) { if (await decide(id, "done", "")) toast("Marked done. The lane reads it as finished."); }
+      else if (await decide(id, "accepted", "")) toast("Accepted. The lane acts on it and marks it done.");
+    }
     else if (act === "decline") { if (await decide(id, "declined", "")) toast("Declined."); }
     else if (act === "else") openDlg(id);
     else if (act === "undo") undo(id);

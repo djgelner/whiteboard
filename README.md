@@ -63,7 +63,7 @@ Every lane whiteboard carries a "Back to the Desk" link in its header. It reads 
 
 When an architect needs a page its cloud session cannot open, it does not stop and ask. It writes a read-only job to a queue file in the owner's Google Drive (`<Lane> inbox/QUEUE.md`), and one Cowork scheduled task on the owner's computer runs every ready job three times a day, saves the results next to the queue, and marks the job done. A single index file, `Cowork inbox/LANES.md`, lists every lane's queue, so a new lane costs the owner nothing. Anything that would send, sign in, buy or post never enters a queue: it goes on the lane's whiteboard as a prompt with a **Copy prompt** button, and the owner fires it by hand. The pattern, the task prompt, and the two file forms are in [docs/COWORK-HANDS.md](docs/COWORK-HANDS.md), [prompts/cowork-scheduled-task.md](prompts/cowork-scheduled-task.md) and [queue/](queue/).
 
-Both pages render a prompt box with a Copy prompt button on any issue, idea or lane item that carries `prompt` and `promptFor` fields.
+Both pages render a prompt box with a Copy prompt button on any issue, idea or lane item that carries `prompt` and `promptFor` fields. On such an item the primary button reads **It's done** instead of Accept recommendation, and clicking it records the status `done` rather than `accepted`: a prompt is something the owner carries out by hand, and the chief of staff needs to know it has been done, not that it was agreed to.
 
 ## License
 

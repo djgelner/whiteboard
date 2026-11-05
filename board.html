@@ -648,7 +648,7 @@ details > summary { cursor: pointer; font-weight: 500; padding: 6px 0; }
     if (!S.readonly) {
       var k = esc(coll) + "-" + esc(i.id), at = ' data-coll="' + esc(coll) + '" data-id="' + esc(i.id) + '"' + b;
       if (decided) h += '<div class="row"><button class="linkbtn" id="undo-' + k + '" data-action="undo"' + at + ">Undo</button></div>";
-      else h += '<div class="row"><button class="btn primary" id="acc-' + k + '" data-action="accept"' + at + ">Accept recommendation</button>" +
+      else h += '<div class="row"><button class="btn primary" id="acc-' + k + '" data-action="accept"' + at + ">" + (i.prompt ? "It's done" : "Accept recommendation") + "</button>" +
         '<button class="btn outline" id="cus-' + k + '" data-action="custom"' + at + ">Something else</button>" +
         '<button class="btn text sm" id="dec-' + k + '" data-action="decline"' + at + ">Decline</button></div>";
     }
@@ -975,7 +975,7 @@ details > summary { cursor: pointer; font-weight: 500; padding: 6px 0; }
       try { await S.db.collection("decisions").doc(dec.id).set(dec); } catch (e2) { wrote = false; saveErr = e2; }
       var sent = await notify("decision", coll, id, status, dec.title, dec.note);
       if (sent && wrote) { try { await S.db.doc("decisions/" + dec.id).update({ notified: true }); } catch (e3) { /* the notice went out; the flag is cosmetic */ } }
-      var base = status === "accepted" ? "Accepted. " + T.Chief + " acts on it and marks it done." : status === "custom" ? "Sent to " + T.chief + " to pass on." : "Declined.";
+      var base = status === "accepted" ? "Accepted. " + T.Chief + " acts on it and marks it done." : status === "done" ? "Marked done. " + T.Chief + " reads it as finished." : status === "custom" ? "Sent to " + T.chief + " to pass on." : "Declined.";
       toast(base + " " + nfx(sent) + (wrote ? "" : " The audit record did not save: " + dbMsg(saveErr)), wrote ? "" : "err");
     }
     S.busy[key] = false; render();
@@ -1114,7 +1114,7 @@ details > summary { cursor: pointer; font-weight: 500; padding: 6px 0; }
     if (!el || el.disabled) return;
     var act = el.getAttribute("data-action"), id = el.getAttribute("data-id"), type = el.getAttribute("data-type");
     var coll = el.getAttribute("data-coll");
-    if (act === "accept") decide(coll, id, "accepted");
+    if (act === "accept") { var itA = (S[coll] || []).filter(function (x) { return x.id === id; })[0]; decide(coll, id, itA && itA.prompt ? "done" : "accepted"); }
     else if (act === "decline") decide(coll, id, "declined");
     else if (act === "custom") openDlg(coll, id);
     else if (act === "undo") undoDecision(coll, id);
